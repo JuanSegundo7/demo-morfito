@@ -97,7 +97,11 @@ export class OrderPriceCalculator {
           );
         }, 0);
 
-        // Drink/side slots are included in the combo price — no extra charge
+        // Drink/side slots are included in the combo price — no extra charge.
+        // Deliberate (commit 7f8aa20 "update combos logic and fries"): the
+        // slot's selectedExtras only records WHICH allowed drink/fries/side
+        // fills the slot for the combos-step "Elegir Bebida"-style pickers —
+        // it is not an upcharge, regardless of that extra's standalone price.
         return slotAcc + slotTotal;
       }, 0);
 

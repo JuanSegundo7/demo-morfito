@@ -64,6 +64,17 @@ import { es } from "date-fns/locale";
 import { formatOrderForWhatsapp } from "@/lib/utils/formatOrderWhatsapp";
 import { toast } from "sonner";
 
+// Same "operation succeeded, but stock didn't sync" surfacing precedent as
+// components/orders/orders-dashboard.tsx (both consume the same
+// syncOrderStockForStatus() result shape) — non-blocking, never prevents
+// the status change from standing.
+function notifyStockSyncFailure(stockError: unknown) {
+  if (!stockError) return;
+  toast.error(
+    "El pedido se actualizó, pero no se pudo sincronizar el stock. Corregilo desde Insumos.",
+  );
+}
+
 type DateFilter = "today" | "week" | "custom";
 
 export default function OrdersHistoryPage() {
@@ -139,16 +150,22 @@ export default function OrdersHistoryPage() {
 
   const confirmCancelOrder = () => {
     if (!orderToCancel) return;
-    cancelOrder.mutate({ orderId: orderToCancel.id });
+    cancelOrder.mutate(
+      { orderId: orderToCancel.id },
+      { onSuccess: (data) => notifyStockSyncFailure(data.stockError) },
+    );
     setCancelDialogOpen(false);
     setOrderToCancel(null);
   };
 
   const handleReactivateOrder = (order: Order) => {
-    reactivateOrder.mutate({
-      orderId: order.id,
-      nextStatus: order.is_paid ? "completed" : "new",
-    });
+    reactivateOrder.mutate(
+      {
+        orderId: order.id,
+        nextStatus: order.is_paid ? "completed" : "new",
+      },
+      { onSuccess: (data) => notifyStockSyncFailure(data.stockError) },
+    );
   };
 
   return (

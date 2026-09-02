@@ -45,17 +45,13 @@ import {
 import type { Extra, ExtraCategory } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
-
-const categoryLabels: Record<ExtraCategory, string> = {
-  extra: "Extras",
-  drink: "Bebidas",
-  fries: "Papas",
-  sides: "Acompañamientos", // 🆕
-};
+import { getActivePreset } from "@/lib/demo/presets/resolve";
 
 const PAGE_SIZE = 12;
 
 export default function ExtrasPage() {
+  const preset = useMemo(() => getActivePreset(), []);
+  const categoryLabels = preset.lexicon.categoryLabels;
   const { data: extras, isLoading } = useAllExtras();
   const createExtra = useCreateExtra();
   const updateExtra = useUpdateExtra();

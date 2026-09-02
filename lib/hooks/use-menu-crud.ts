@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Burger, Extra } from "@/lib/types";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { agree } from "@/lib/demo/presets/lexicon";
 
 // ==================== BURGERS ====================
 
@@ -44,7 +46,8 @@ export function useCreateBurger() {
     },
     onError: (error: any) => {
       console.error("Error creating burger:", error);
-      alert("Error al crear hamburguesa: " + error.message);
+      const preset = getActivePreset();
+      alert(`Error al crear ${preset.lexicon.product.singular}: ` + error.message);
     },
   });
 }
@@ -71,7 +74,8 @@ export function useUpdateBurger() {
     },
     onError: (error: any) => {
       console.error("Error updating burger:", error);
-      alert("Error al actualizar hamburguesa: " + error.message);
+      const preset = getActivePreset();
+      alert(`Error al actualizar ${preset.lexicon.product.singular}: ` + error.message);
     },
   });
 }
@@ -91,8 +95,9 @@ export function useDeleteBurger() {
 
         // Si hay error de foreign key constraint
         if (error.code === "23503") {
+          const preset = getActivePreset();
           throw new Error(
-            "No se puede eliminar esta hamburguesa porque está siendo usada en pedidos o combos",
+            `No se puede eliminar ${agree(preset.lexicon.product.gender, "esta", "este")} ${preset.lexicon.product.singular} porque está siendo usada en pedidos o combos`,
           );
         }
         throw error;
@@ -107,7 +112,8 @@ export function useDeleteBurger() {
     },
     onError: (error: any) => {
       console.error("❌ Error in onError:", error);
-      alert(error.message || "Error al eliminar hamburguesa");
+      const preset = getActivePreset();
+      alert(error.message || `Error al eliminar ${preset.lexicon.product.singular}`);
     },
   });
 }

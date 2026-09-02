@@ -1,14 +1,17 @@
+import { useMemo } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WizardStep } from "../order-wizard-context";
-
-const steps: { key: WizardStep; label: string }[] = [
-  { key: "customer", label: "Cliente" },
-  { key: "burgers", label: "Hamburguesas" },
-  { key: "summary", label: "Resumen" },
-];
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { capitalize } from "@/lib/demo/presets/lexicon";
 
 export function Stepper({ current }: { current: WizardStep }) {
+  const preset = useMemo(() => getActivePreset(), []);
+  const steps: { key: WizardStep; label: string }[] = [
+    { key: "customer", label: "Cliente" },
+    { key: "burgers", label: capitalize(preset.lexicon.product.plural) },
+    { key: "summary", label: "Resumen" },
+  ];
   const currentIndex = steps.findIndex((s) => s.key === current);
 
   return (

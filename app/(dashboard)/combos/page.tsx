@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import { Combo } from "@/lib/types/combo-types";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
 
 /* -------------------------------------------------- */
 
@@ -56,6 +57,7 @@ const EMPTY_FORM = {
 };
 
 export default function CombosPage() {
+  const preset = useMemo(() => getActivePreset(), []);
   const { data: combos, isLoading, isError } = useAllCombos();
   const createCombo = useCreateCombo();
   const updateComboWithSlots = useUpdateComboWithSlots();
@@ -304,7 +306,7 @@ export default function CombosPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label>Cantidad de hamburguesas</Label>
+                  <Label>Cantidad de {preset.lexicon.product.plural}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -318,12 +320,12 @@ export default function CombosPage() {
                     }
                   />
                   <p className="text-xs text-muted-foreground">
-                    Cuántas hamburguesas incluye
+                    Cuántas {preset.lexicon.product.plural} incluye
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <Label>Carnes por hamburguesa</Label>
+                  <Label>Carnes por {preset.lexicon.product.singular}</Label>
                   <Input
                     type="number"
                     min={1}

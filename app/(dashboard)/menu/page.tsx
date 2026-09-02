@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,8 +50,11 @@ import type { Burger } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { agree, capitalize } from "@/lib/demo/presets/lexicon";
 
 export default function MenuPage() {
+  const preset = useMemo(() => getActivePreset(), []);
   const { data: burgers, isLoading } = useAllBurgers();
   const createBurger = useCreateBurger();
   const updateBurger = useUpdateBurger();
@@ -210,7 +213,7 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
       setDialogOpen(false);
     } catch (error) {
       console.error("Error saving burger:", error);
-      alert("Error al guardar hamburguesa");
+      alert(`Error al guardar ${preset.lexicon.product.singular}`);
     }
   };
 
@@ -235,21 +238,25 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
 
   return (
     <section className="flex h-screen flex-col">
-      <Header title="Menú" subtitle="Administra las hamburguesas del menú" />
+      <Header
+        title="Menú"
+        subtitle={`Administra las ${preset.lexicon.product.plural} del menú`}
+      />
 
       <div className="flex-1 overflow-auto py-6 md:py-6 md:px-0">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
-              {burgers?.length || 0} hamburguesas{" "}
+              {burgers?.length || 0} {preset.lexicon.product.plural}{" "}
               {burgers &&
                 `(${burgers.filter((b) => b.is_available).length} disponibles)`}
             </p>
           </div>
           <Button onClick={handleOpenCreate}>
             <Plus className="mr-2 h-4 w-4" />
-            Nueva hamburguesa
+            {agree(preset.lexicon.product.gender, "Nueva", "Nuevo")}{" "}
+            {preset.lexicon.product.singular}
           </Button>
         </div>
 
@@ -373,13 +380,18 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
         ) : (
           <div className="py-20 text-center">
             <ImageIcon className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No hay hamburguesas</h3>
+            <h3 className="mb-2 text-lg font-semibold">
+              No hay {preset.lexicon.product.plural}
+            </h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Comienza creando tu primera hamburguesa
+              Comienza creando tu{" "}
+              {agree(preset.lexicon.product.gender, "primera", "primer")}{" "}
+              {preset.lexicon.product.singular}
             </p>
             <Button onClick={handleOpenCreate}>
               <Plus className="mr-2 h-4 w-4" />
-              Crear primera hamburguesa
+              Crear {agree(preset.lexicon.product.gender, "primera", "primer")}{" "}
+              {preset.lexicon.product.singular}
             </Button>
           </div>
         )}
@@ -390,12 +402,14 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingBurger ? "Editar hamburguesa" : "Nueva hamburguesa"}
+              {editingBurger
+                ? `Editar ${preset.lexicon.product.singular}`
+                : `${agree(preset.lexicon.product.gender, "Nueva", "Nuevo")} ${preset.lexicon.product.singular}`}
             </DialogTitle>
             <DialogDescription>
               {editingBurger
-                ? "Modifica los datos de la hamburguesa"
-                : "Completa los datos para crear una nueva hamburguesa"}
+                ? `Modifica los datos de ${agree(preset.lexicon.product.gender, "la", "el")} ${preset.lexicon.product.singular}`
+                : `Completa los datos para crear ${agree(preset.lexicon.product.gender, "una nueva", "un nuevo")} ${preset.lexicon.product.singular}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -491,7 +505,9 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
             {/* Default Meat & Fries */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="meat">Medallones por defecto</Label>
+                <Label htmlFor="meat">
+                  {capitalize(preset.lexicon.mainComponent.plural)} por defecto
+                </Label>
                 <Input
                   id="meat"
                   type="number"
@@ -531,7 +547,7 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                placeholder="Deliciosa hamburguesa con..."
+                placeholder={`${agree(preset.lexicon.product.gender, "Deliciosa", "Delicioso")} ${preset.lexicon.product.singular} con...`}
                 rows={3}
               />
             </div>
@@ -608,7 +624,7 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
                   ? "Guardando..."
                   : editingBurger
                     ? "Guardar cambios"
-                    : "Crear hamburguesa"}
+                    : `Crear ${preset.lexicon.product.singular}`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -618,14 +634,17 @@ const FALLBACK_IMAGE = '/solvify-icon.jpg'
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar hamburguesa</AlertDialogTitle>
+            <AlertDialogTitle>
+              Eliminar {preset.lexicon.product.singular}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               ¿Estás seguro de eliminar "{deletingBurger?.name}"?
               <br />
               <span className="text-sm text-muted-foreground mt-2 block">
-                Si esta hamburguesa tiene pedidos asociados, no se podrá
-                eliminar. En ese caso, puedes ocultarla usando el botón de
-                "Ocultar".
+                Si {agree(preset.lexicon.product.gender, "esta", "este")}{" "}
+                {preset.lexicon.product.singular} tiene pedidos asociados, no
+                se podrá eliminar. En ese caso, puedes ocultarla usando el
+                botón de "Ocultar".
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>

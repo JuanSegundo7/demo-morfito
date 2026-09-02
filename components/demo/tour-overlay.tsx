@@ -6,9 +6,8 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useDemoStore } from "@/lib/demo/store"
-import { TOUR_STEPS } from "@/lib/demo/tour-steps"
-
-const TOTAL = TOUR_STEPS.length
+import { getTourSteps } from "@/lib/demo/tour-steps"
+import { getActivePreset } from "@/lib/demo/presets/resolve"
 
 export function DemoTourOverlay() {
   const router = useRouter()
@@ -28,6 +27,9 @@ export function DemoTourOverlay() {
     return () => clearTimeout(t)
   }, [])
 
+  const preset = getActivePreset()
+  const TOUR_STEPS = getTourSteps(preset.lexicon, preset.label)
+  const TOTAL = TOUR_STEPS.length
   const step = TOUR_STEPS[tourStep]
 
   // Navigate + control wizard whenever step changes

@@ -80,6 +80,15 @@ export function useCreateOrder() {
           notes: input.notes,
           delivery_time: input.delivery_time ?? null,
           status: "new",
+          // A wizard-created order is a walk-in/phone order taken directly
+          // by staff, never a PedidosYa order (those arrive through the
+          // PedidosYa integration, not this wizard) — so it's always
+          // "local" with no commission. Mirrors generateSeedOrders()'s own
+          // local-order shape in lib/demo/seed/orders.ts.
+          source: "local",
+          commission_amount: 0,
+          commission_rate: null,
+          price_adjustment: 0,
         })
         .select()
         .single();

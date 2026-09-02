@@ -1,11 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils/format";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { capitalize } from "@/lib/demo/presets/lexicon";
 
 /* ================= TYPES ================= */
 
@@ -75,6 +78,8 @@ export function SelectedBurgerCard({
   onToggleExtra,
   onUpdateExtraQuantity,
 }: Props) {
+  const preset = useMemo(() => getActivePreset(), []);
+
   // Referencias base para calcular ajustes
   const referenceMeatCount =
     baseMeatCount ?? item.burger.default_meat_quantity ?? 2; // ✅
@@ -218,7 +223,7 @@ export function SelectedBurgerCard({
               {meatExtra && (
                 <div>
                   <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                    Medallones
+                    {capitalize(preset.lexicon.mainComponent.plural)}
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -270,7 +275,7 @@ export function SelectedBurgerCard({
               {friesExtra && (
                 <div>
                   <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                    Papas Fritas
+                    {capitalize(preset.lexicon.sideComponent.plural)}
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -305,28 +310,22 @@ export function SelectedBurgerCard({
               )}
             </div>
 
-            {/* EXTRAS - Filtrar medallones Y papas */}
+            {/* EXTRAS - Filtrar el extra meat-unit y el default-side (por id de rol, no por nombre) */}
             {Object.entries(extrasByCategory).map(
               ([category, categoryExtras]) => (
                 <div key={category}>
                   <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                    {category === "extra"
-                      ? "Extras"
-                      : category === "drink"
-                        ? "Bebidas"
-                        : category === "fries"
-                          ? "Papas"
-                          : category === "sides"
-                            ? "Acompañamientos"
-                            : "Otros"}
+                    {preset.lexicon.categoryLabels[
+                      category as keyof typeof preset.lexicon.categoryLabels
+                    ] ?? "Otros"}
                   </p>
 
                   <div className="flex flex-wrap gap-2">
                     {categoryExtras
                       .filter(
                         (e) =>
-                          e.name !== "Medallón" &&
-                          e.name !== "Papas Fritas Chicas",
+                          e.id !== preset.roles.meatExtraId &&
+                          e.id !== preset.roles.defaultSideExtraId,
                       )
                       .map((extra) => {
                         const selected = item.selectedExtras.find(

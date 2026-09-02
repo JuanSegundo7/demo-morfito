@@ -14,6 +14,8 @@ import { useCustomerAddresses } from "@/lib/hooks/use-customers";
 import { useAllCombos } from "@/lib/hooks/use-combos";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils/format";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { capitalize } from "@/lib/demo/presets/lexicon";
 import { EditCustomerModal } from "../orders/edit/edit-customer-modal";
 import { useOrderWizard } from "./hooks/use-order-wizard";
 import { useMemo, useEffect } from "react";
@@ -61,14 +63,19 @@ export function OrderWizardDrawer({
   const { data: combos } = useAllCombos();
 
   // ================= COMPUTED DATA =================
+  // Resolved by role id, not by name (plan's "riesgo que manda sobre todo
+  // el diseño") — a preset that renames its extras no longer silently
+  // zeroes the meat/fries price adjustments.
+  const preset = useMemo(() => getActivePreset(), []);
+
   const meatExtra = useMemo(
-    () => extras?.find((e) => e.name === "Medallón"),
-    [extras],
+    () => extras?.find((e) => e.id === preset.roles.meatExtraId),
+    [extras, preset],
   );
 
   const friesExtra = useMemo(
-    () => extras?.find((e) => e.name === "Papas fritas chicas"),
-    [extras],
+    () => extras?.find((e) => e.id === preset.roles.defaultSideExtraId),
+    [extras, preset],
   );
 
   const availableSides = useMemo(
@@ -198,7 +205,7 @@ export function OrderWizardDrawer({
   const steps = [
     { key: "customer", label: "Cliente" },
     { key: "combos", label: "Combos" },
-    { key: "burgers", label: "Hamburguesas" },
+    { key: "burgers", label: capitalize(preset.lexicon.product.plural) },
     { key: "sides", label: "Acomp." },
     { key: "summary", label: "Resumen" },
   ];
@@ -432,8 +439,10 @@ export function OrderWizardDrawer({
                   )}
                   {totalBurgerItems > 0 && (
                     <span>
-                      {totalBurgerItems} hamburguesa
-                      {totalBurgerItems > 1 ? "s" : ""}
+                      {totalBurgerItems}{" "}
+                      {totalBurgerItems > 1
+                        ? preset.lexicon.product.plural
+                        : preset.lexicon.product.singular}
                     </span>
                   )}
                   {totalSideItems > 0 && <span>{totalSideItems} acomp.</span>}

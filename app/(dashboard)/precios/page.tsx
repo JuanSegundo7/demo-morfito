@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,15 +13,12 @@ import { useAllBurgers, useUpdateBurger } from "@/lib/hooks/use-menu-crud";
 import { useAllExtras, useUpdateExtra } from "@/lib/hooks/use-menu-crud";
 import { formatCurrency } from "@/lib/utils/format";
 import type { ExtraCategory } from "@/lib/types";
-
-const categoryLabels: Record<ExtraCategory, string> = {
-  extra: "Extras",
-  drink: "Bebidas",
-  fries: "Papas",
-  combo: "Combos",
-};
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { capitalize } from "@/lib/demo/presets/lexicon";
 
 export default function PricingPage() {
+  const preset = useMemo(() => getActivePreset(), []);
+  const categoryLabels = preset.lexicon.categoryLabels;
   const { data: burgers, isLoading: burgersLoading } = useAllBurgers();
   const { data: extras, isLoading: extrasLoading } = useAllExtras();
   const updateBurger = useUpdateBurger();
@@ -64,17 +61,17 @@ export default function PricingPage() {
       <div className="flex-1 overflow-auto py-6">
         <Tabs defaultValue="burgers">
           <TabsList className="mb-6">
-            <TabsTrigger value="burgers">Hamburguesas</TabsTrigger>
-            <TabsTrigger value="extras">Extras</TabsTrigger>
-            <TabsTrigger value="drinks">Bebidas</TabsTrigger>
-            <TabsTrigger value="fries">Papas</TabsTrigger>
-            <TabsTrigger value="combos">Combos</TabsTrigger>
+            <TabsTrigger value="burgers">{capitalize(preset.lexicon.product.plural)}</TabsTrigger>
+            <TabsTrigger value="extras">{categoryLabels.extra}</TabsTrigger>
+            <TabsTrigger value="drinks">{categoryLabels.drink}</TabsTrigger>
+            <TabsTrigger value="fries">{categoryLabels.fries}</TabsTrigger>
+            <TabsTrigger value="sides">{categoryLabels.sides}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="burgers">
             <Card className="bg-card">
               <CardHeader>
-                <CardTitle>Precios de Hamburguesas</CardTitle>
+                <CardTitle>Precios de {capitalize(preset.lexicon.product.plural)}</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -146,12 +143,12 @@ export default function PricingPage() {
             </Card>
           </TabsContent>
 
-          {(["extras", "drinks", "fries", "combos"] as const).map((tab) => {
+          {(["extras", "drinks", "fries", "sides"] as const).map((tab) => {
             const categoryMap: Record<string, ExtraCategory> = {
               extras: "extra",
               drinks: "drink",
               fries: "fries",
-              combos: "combo",
+              sides: "sides",
             };
             const category = categoryMap[tab];
             const filteredExtras =

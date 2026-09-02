@@ -9,7 +9,9 @@
  */
 
 import { useDemoStore } from "./store";
+import { getActivePreset } from "./presets/resolve";
 
+// keep in sync with lib/demo/store.ts's TableName
 type TableName =
   | "burgers"
   | "extras"
@@ -21,10 +23,16 @@ type TableName =
   | "orders"
   | "order_items"
   | "order_item_extras"
-  | "external_income";
+  | "external_income"
+  | "supplies"
+  | "burger_supplies"
+  | "extra_supplies"
+  | "expenses"
+  | "recurring_expenses"
+  | "order_stock_movements";
 
 type Row = Record<string, unknown>;
-type MockResult<T> = { data: T; error: null; count?: number | null };
+type MockResult<T = any> = { data: T; error: null; count?: number | null };
 type MockError    = { data: null; error: { message: string; code?: string }; count?: null };
 
 type FilterOp = "eq" | "neq" | "gte" | "lte" | "gt" | "lt" | "ilike" | "in";
@@ -101,6 +109,46 @@ function resolveRow(row: Row, table: TableName, store: ReturnType<typeof useDemo
     return { ...row, customer_addresses };
   }
 
+  // use-supplies.ts:177 — useAllBurgersWithRecipes() selects
+  // "*, burger_supplies(*, supply:supplies(*))". `burgers` had no join
+  // branch at all before this table existed to justify one.
+  if (table === "burgers") {
+    const burger_supplies = store.burger_supplies
+      .filter((bs) => bs.burger_id === row.id)
+      .map((bs) => ({ ...bs, supply: store.supplies.find((s) => s.id === bs.supply_id) ?? null }));
+    return { ...row, burger_supplies };
+  }
+
+  // use-supplies.ts:280 — useAllExtrasWithRecipes() selects
+  // "*, extra_supplies(*, supply:supplies(*))". Mirrors the `burgers`
+  // branch above exactly.
+  if (table === "extras") {
+    const extra_supplies = store.extra_supplies
+      .filter((es) => es.extra_id === row.id)
+      .map((es) => ({ ...es, supply: store.supplies.find((s) => s.id === es.supply_id) ?? null }));
+    return { ...row, extra_supplies };
+  }
+
+  // use-supplies.ts:159 selects "*, supply:supplies(*)" (aliased) on
+  // burger_supplies directly; use-order-stock.ts:133 separately selects
+  // "burgers(default_meat_quantity, default_fries_quantity)" (unaliased)
+  // on the SAME table. Both embeds have to come back on every row — the
+  // two call sites don't know about each other's field name.
+  if (table === "burger_supplies") {
+    const supply = store.supplies.find((s) => s.id === row.supply_id) ?? null;
+    const burgers = store.burgers.find((b) => b.id === row.burger_id) ?? null;
+    return { ...row, supply, burgers };
+  }
+
+  // use-supplies.ts:259 selects "*, supply:supplies(*)" on extra_supplies —
+  // same aliased shape as burger_supplies above, no unaliased sibling needed
+  // (nothing embeds extra_supplies the way use-order-stock.ts embeds
+  // burger_supplies).
+  if (table === "extra_supplies") {
+    const supply = store.supplies.find((s) => s.id === row.supply_id) ?? null;
+    return { ...row, supply };
+  }
+
   return row;
 }
 
@@ -108,14 +156,30 @@ function resolveRow(row: Row, table: TableName, store: ReturnType<typeof useDemo
 // Query builder
 // ============================================================
 
-class MockQueryBuilder<T = unknown> {
+// Two generic slots, mirroring how postgrest-js keeps a row type separate
+// from the shape a given call chain ultimately resolves to: `T` is always
+// the row shape, `TResult` is what `.then()` actually hands back — `T[]`
+// for a plain `.select()`, narrowed to plain `T` by `.single()` /
+// `.maybeSingle()`. Without this split, every awaited call resolved to
+// bare `data: T` (effectively `data: any` since nobody parametrizes
+// `.from<T>()`), and `any` — unlike `any[]` — gives arrow-callback
+// parameters passed to `.reduce()`/`.map()`/etc. no contextual type at
+// all, so they come back as implicit `any` under `noImplicitAny`. Real
+// supabase-js never hits this because its list-mode builder is typed as
+// an actual array from the start.
+class MockQueryBuilder<T = any, TResult = T[]> {
   private _table: TableName;
   private _filters: Filter[] = [];
   private _orFilter: string | null = null;
-  private _orderCol: string | null = null;
-  private _orderAsc = true;
+  // Supports chained .order("a").order("b") — Postgres (and real
+  // PostgREST) applies every .order() call as a secondary sort key, but
+  // this builder used to keep only the LAST one (`_orderCol` got
+  // overwritten). use-supplies.ts:281-282 does exactly
+  // .order("category").order("name") and expects both to hold.
+  private _orders: { col: string; ascending: boolean }[] = [];
   private _limitN: number | null = null;
   private _isSingle = false;
+  private _isMaybeSingle = false;
   private _isHead = false;
   private _countMode = false;
 
@@ -123,6 +187,8 @@ class MockQueryBuilder<T = unknown> {
   private _insertData: Row | Row[] | null = null;
   private _updateData: Row | null = null;
   private _isDelete = false;
+  private _upsertData: Row | Row[] | null = null;
+  private _upsertConflict: string[] | null = null;
 
   constructor(table: TableName) {
     this._table = table;
@@ -148,15 +214,40 @@ class MockQueryBuilder<T = unknown> {
   or(filterStr: string) { this._orFilter = filterStr; return this; }
 
   order(col: string, opts?: { ascending?: boolean }) {
-    this._orderCol = col;
-    this._orderAsc = opts?.ascending ?? true;
+    this._orders.push({ col, ascending: opts?.ascending ?? true });
     return this;
   }
 
   limit(n: number)  { this._limitN = n; return this; }
-  single()          { this._isSingle = true; return this; }
+  // Return type narrows TResult from the list default (T[]) to plain T —
+  // see the class-level comment on why this split exists.
+  single(): MockQueryBuilder<T, T> {
+    this._isSingle = true;
+    return this as unknown as MockQueryBuilder<T, T>;
+  }
+  // Same as single() but resolves { data: null, error: null } on zero rows
+  // instead of PGRST116 — use-expenses.ts:208/:298 rely on "no row" being a
+  // clean, non-error result (the linked supply may have been deleted
+  // independently of the expense that referenced it).
+  maybeSingle(): MockQueryBuilder<T, T> {
+    this._isSingle = true;
+    this._isMaybeSingle = true;
+    return this as unknown as MockQueryBuilder<T, T>;
+  }
 
   // ── Mutations ────────────────────────────────────────────────
+
+  // Insert-or-update on a (possibly composite) unique conflict target —
+  // e.g. onConflict: "burger_id,supply_id". Real Postgres resolves this via
+  // a UNIQUE index; here it's a linear scan comparing every column named in
+  // onConflict. See _execute() below for the snapshot-freshness trap this
+  // must avoid.
+  upsert(data: Row | Row[], opts: { onConflict: string }) {
+    const clone = new MockQueryBuilder<T>(this._table);
+    clone._upsertData = data;
+    clone._upsertConflict = opts.onConflict.split(",").map((c) => c.trim());
+    return clone;
+  }
 
   insert(data: Row | Row[]) {
     const clone = new MockQueryBuilder<T>(this._table);
@@ -183,6 +274,48 @@ class MockQueryBuilder<T = unknown> {
   private _execute(): MockResult<unknown> | MockError {
     const store = useDemoStore.getState();
 
+    // ── UPSERT ──────────────────────────────────────────────
+    // use-supplies.ts:208 (onConflict: "burger_id,supply_id") and :300
+    // (onConflict: "extra_id,supply_id") — insert-or-update on a composite
+    // conflict target, since neither of those columns alone is unique.
+    if (this._upsertData !== null) {
+      const rows = Array.isArray(this._upsertData) ? this._upsertData : [this._upsertData];
+      const conflictCols = this._upsertConflict ?? [];
+      let lastRow: Row | null = null;
+
+      for (const row of rows) {
+        // Deliberately re-read the store INSIDE the loop, not once before
+        // it (unlike INSERT below, which only calls stable actions and
+        // never reads the table itself). Deciding insert-vs-update here
+        // means READING store[this._table] — reusing the outer `store`
+        // snapshot captured at the top of _execute() would make every row
+        // after the first look for a match against data that's already
+        // stale. Concretely: saving the same recipe line twice in a row
+        // would insert two rows instead of updating the one just written,
+        // and the bug would only show up on the SECOND save, not the first.
+        const currentTable = useDemoStore.getState()[this._table] as unknown as Row[];
+        const existing =
+          conflictCols.length > 0
+            ? currentTable.find((r) => conflictCols.every((col) => r[col] === row[col]))
+            : undefined;
+
+        if (existing) {
+          store.updateRow(this._table, existing.id as string, row);
+          const after = useDemoStore.getState()[this._table] as unknown as Row[];
+          lastRow = after.find((r) => r.id === existing.id) ?? { ...existing, ...row };
+        } else {
+          lastRow = store.insertRow(this._table, row) as Row;
+        }
+      }
+
+      const freshState = useDemoStore.getState();
+      if (this._isSingle) {
+        const enriched = resolveRow(lastRow!, this._table, freshState);
+        return { data: enriched, error: null };
+      }
+      return { data: rows.length === 1 ? resolveRow(lastRow!, this._table, freshState) : rows, error: null };
+    }
+
     // ── INSERT ──────────────────────────────────────────────
     if (this._insertData !== null) {
       const rows = Array.isArray(this._insertData) ? this._insertData : [this._insertData];
@@ -201,7 +334,7 @@ class MockQueryBuilder<T = unknown> {
 
     // ── UPDATE ──────────────────────────────────────────────
     if (this._updateData !== null) {
-      const table = store[this._table] as Row[];
+      const table = store[this._table] as unknown as Row[];
       const eqFilter = this._filters.find((f) => f.op === "eq" && f.column === "id");
 
       if (eqFilter) {
@@ -216,7 +349,7 @@ class MockQueryBuilder<T = unknown> {
 
       if (this._isSingle) {
         const eqId = eqFilter?.value as string | undefined;
-        const fresh = useDemoStore.getState()[this._table] as Row[];
+        const fresh = useDemoStore.getState()[this._table] as unknown as Row[];
         const updated = eqId ? fresh.find((r) => r.id === eqId) : fresh[0];
         return { data: updated ? resolveRow(updated, this._table, useDemoStore.getState()) : null, error: null };
       }
@@ -225,7 +358,7 @@ class MockQueryBuilder<T = unknown> {
 
     // ── DELETE ──────────────────────────────────────────────
     if (this._isDelete) {
-      const table = store[this._table] as Row[];
+      const table = store[this._table] as unknown as Row[];
       const eqFilter = this._filters.find((f) => f.op === "eq" && f.column === "id");
       const inFilter  = this._filters.find((f) => f.op === "in"  && f.column === "id");
 
@@ -249,7 +382,7 @@ class MockQueryBuilder<T = unknown> {
     }
 
     // ── SELECT ──────────────────────────────────────────────
-    let rows = (store[this._table] as Row[]).slice();
+    let rows = (store[this._table] as unknown as Row[]).slice();
     rows = this._applyFilters(rows);
     rows = rows.map((r) => resolveRow(r, this._table, store));
 
@@ -258,15 +391,19 @@ class MockQueryBuilder<T = unknown> {
       return { data: null as unknown, error: null, count: rows.length };
     }
 
-    // Order
-    if (this._orderCol) {
-      const col = this._orderCol;
-      const asc = this._orderAsc;
+    // Order — every .order() call is a secondary sort key, in call order
+    // (e.g. .order("category").order("name") sorts by category first, then
+    // name within each category), matching real PostgREST/Postgres
+    // ORDER BY col1, col2 semantics.
+    if (this._orders.length > 0) {
+      const orders = this._orders;
       rows.sort((a, b) => {
-        const av = a[col] as string;
-        const bv = b[col] as string;
-        if (av < bv) return asc ? -1 : 1;
-        if (av > bv) return asc ? 1 : -1;
+        for (const { col, ascending } of orders) {
+          const av = a[col] as string;
+          const bv = b[col] as string;
+          if (av < bv) return ascending ? -1 : 1;
+          if (av > bv) return ascending ? 1 : -1;
+        }
         return 0;
       });
     }
@@ -277,6 +414,10 @@ class MockQueryBuilder<T = unknown> {
     // Single
     if (this._isSingle) {
       if (rows.length === 0) {
+        // maybeSingle(): zero rows is a clean result, not PGRST116 — the
+        // caller (e.g. use-expenses.ts) treats `data: null` as "nothing to
+        // do here", not as a failure to surface.
+        if (this._isMaybeSingle) return { data: null, error: null };
         return { data: null, error: { message: "Row not found", code: "PGRST116" } };
       }
       return { data: rows[0], error: null };
@@ -332,13 +473,13 @@ class MockQueryBuilder<T = unknown> {
   }
 
   // Make the builder awaitable (PromiseLike)
-  then<TResult1 = MockResult<T>, TResult2 = never>(
-    resolve: (value: MockResult<T>) => TResult1 | PromiseLike<TResult1>,
+  then<TResult1 = MockResult<TResult>, TResult2 = never>(
+    resolve: (value: MockResult<TResult>) => TResult1 | PromiseLike<TResult1>,
     reject?: (reason: unknown) => TResult2 | PromiseLike<TResult2>,
   ): Promise<TResult1 | TResult2> {
     try {
       const result = this._execute();
-      return Promise.resolve(resolve(result as MockResult<T>));
+      return Promise.resolve(resolve(result as MockResult<TResult>));
     } catch (err) {
       if (reject) return Promise.resolve(reject(err));
       return Promise.reject(err);
@@ -350,17 +491,22 @@ class MockQueryBuilder<T = unknown> {
 // Auth stub
 // ============================================================
 
-const DEMO_USER = {
-  id: "demo-admin-00000000-0000-0000-0000",
-  email: "demo@hamburgueseria.com",
-  user_metadata: { role: "admin", name: "Demo Admin" },
-  aud: "authenticated",
-  created_at: new Date().toISOString(),
-};
+// Computed lazily (not at module eval) so it always reflects the preset the
+// CURRENT cookie resolves to, not whatever was active when this module
+// first loaded in the process.
+function getDemoUser() {
+  return {
+    id: "demo-admin-00000000-0000-0000-0000",
+    email: `demo@${getActivePreset().id}.com`,
+    user_metadata: { role: "admin", name: "Demo Admin" },
+    aud: "authenticated",
+    created_at: new Date().toISOString(),
+  };
+}
 
 const demoAuth = {
-  getUser: async () => ({ data: { user: DEMO_USER }, error: null }),
-  signInWithPassword: async () => ({ data: { user: DEMO_USER, session: { access_token: "demo" } }, error: null }),
+  getUser: async () => ({ data: { user: getDemoUser() }, error: null }),
+  signInWithPassword: async () => ({ data: { user: getDemoUser(), session: { access_token: "demo" } }, error: null }),
   signOut: async () => ({ error: null }),
   onAuthStateChange: (_event: string, _cb: unknown) => ({ data: { subscription: { unsubscribe: () => {} } } }),
   admin: {

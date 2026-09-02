@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { useDemoStore } from "@/lib/demo/store"
 import { useShallow } from "zustand/react/shallow"
 import {
@@ -13,8 +14,10 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { formatCurrency } from "@/lib/utils/format"
 import { Printer } from "lucide-react"
+import { getActivePreset } from "@/lib/demo/presets/resolve"
 
 export function DemoPrintModal() {
+  const preset = useMemo(() => getActivePreset(), [])
   const printModalOrderId = useDemoStore((s) => s.printModalOrderId)
   const closePrintModal   = useDemoStore((s) => s.closePrintModal)
 
@@ -41,7 +44,7 @@ export function DemoPrintModal() {
         <div className="rounded-lg border bg-card p-4 font-mono text-xs space-y-2">
           {/* Header */}
           <div className="text-center space-y-0.5">
-            <div className="font-bold text-sm">HAMBURGUESERÍA DEMO</div>
+            <div className="font-bold text-sm">{preset.label.toUpperCase()} DEMO</div>
             <div className="text-muted-foreground text-[10px]">{dateLabel}</div>
           </div>
 

@@ -130,7 +130,7 @@ describe("OrderDataTransformer.transformCombosToOrderItems", () => {
       slotId: "slot-1",
       slotType: "burger",
       burgers: [],
-      selectedExtra: null,
+      selectedExtras: [],
     });
     const combo = makeSelectedCombo({
       combo: { id: "c1", name: "Combo Clásico", price: 1500 },
@@ -146,7 +146,7 @@ describe("OrderDataTransformer.transformCombosToOrderItems", () => {
     expect(customizations[0].slotId).toBe("slot-1");
     expect(customizations[0].slotType).toBe("burger");
     expect(customizations[0]).toHaveProperty("burgers");
-    expect(customizations[0]).toHaveProperty("selectedExtra");
+    expect(customizations[0]).toHaveProperty("selectedExtras");
   });
 
   it("combo_id correcto y burger_id siempre null", () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { OrderColumn } from "./order-column";
 import { OrderDetailsModal } from "./order-details-modal";
@@ -47,6 +48,19 @@ import type { OrderStatus } from "@/lib/types";
 import { useDemoStore } from "@/lib/demo/store";
 import { useDemoOrderGenerator } from "@/lib/demo/use-demo-order-generator";
 
+// The status change itself already succeeded by the time this can fire
+// (useUpdateOrderStatus deliberately never rolls the status back over a
+// stock-sync failure — see its own comment) — this only surfaces the stock
+// side so staff know to fix it manually. Non-blocking: never throws, never
+// prevents the status change from standing. Same "operation succeeded, but
+// stock didn't sync" phrasing precedent as app/(dashboard)/finanzas/page.tsx.
+function notifyStockSyncFailure(stockError: unknown) {
+  if (!stockError) return;
+  toast.error(
+    "El pedido se actualizó, pero no se pudo sincronizar el stock. Corregilo desde Insumos.",
+  );
+}
+
 export function OrdersDashboard() {
   const queryClient = useQueryClient();
   const { data: orders, isLoading, refetch, isRefetching } = useOrders();
@@ -65,7 +79,7 @@ export function OrdersDashboard() {
   const [orderToComplete, setOrderToComplete] = useState<Order | null>(null);
   const [activeTab, setActiveTab] = useState<"new" | "ready">("new");
 
-  const { generatorEnabled, setGeneratorEnabled, wizardTourOpen, wizardTourForceStep } = useDemoStore();
+  const { generatorEnabled, setGeneratorEnabled, wizardTourOpen, wizardTourForceStep, resetSignal } = useDemoStore();
   useDemoOrderGenerator();
 
   // Open/close wizard when tour controls it
@@ -80,6 +94,21 @@ export function OrdersDashboard() {
       wizardOpenedByTour.current = false;
     }
   }, [wizardTourOpen]);
+
+  // <PresetSwitcher> bumps resetSignal on reseed() — close any dialog/drawer
+  // that might otherwise hold onto burger/extra/order ids from the
+  // just-replaced preset. Skip the mount-time run (initial value is 0).
+  const isFirstResetSignal = useRef(true);
+  useEffect(() => {
+    if (isFirstResetSignal.current) {
+      isFirstResetSignal.current = false;
+      return;
+    }
+    setWizardOpen(false);
+    setDetailsOpen(false);
+    setPaymentDialogOpen(false);
+    setOrderIdToEdit(null);
+  }, [resetSignal]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -129,7 +158,10 @@ export function OrdersDashboard() {
     });
 
     setActiveOrder(null);
-    updateStatus.mutate({ orderId, status: newStatus });
+    updateStatus.mutate(
+      { orderId, status: newStatus },
+      { onSuccess: (data) => notifyStockSyncFailure(data.stockError) },
+    );
   };
 
   const handleCompleteOrder = (order: Order) => {
@@ -137,7 +169,10 @@ export function OrdersDashboard() {
       setOrderToComplete(order);
       setPaymentDialogOpen(true);
     } else {
-      updateStatus.mutate({ orderId: order.id, status: "completed" });
+      updateStatus.mutate(
+        { orderId: order.id, status: "completed" },
+        { onSuccess: (data) => notifyStockSyncFailure(data.stockError) },
+      );
     }
   };
 
@@ -148,10 +183,13 @@ export function OrdersDashboard() {
       { orderId: orderToComplete.id, isPaid: true },
       {
         onSuccess: () => {
-          updateStatus.mutate({
-            orderId: orderToComplete.id,
-            status: "completed",
-          });
+          updateStatus.mutate(
+            {
+              orderId: orderToComplete.id,
+              status: "completed",
+            },
+            { onSuccess: (data) => notifyStockSyncFailure(data.stockError) },
+          );
         },
       },
     );
@@ -173,7 +211,10 @@ export function OrdersDashboard() {
 
   const handleChangeStatus = (order: Order) => {
     if (order.status === "new") {
-      updateStatus.mutate({ orderId: order.id, status: "ready" });
+      updateStatus.mutate(
+        { orderId: order.id, status: "ready" },
+        { onSuccess: (data) => notifyStockSyncFailure(data.stockError) },
+      );
     } else if (order.status === "ready") {
       handleCompleteOrder(order);
     }

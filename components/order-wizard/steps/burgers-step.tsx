@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -5,6 +6,7 @@ import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import type { Burger, Extra } from "@/lib/types";
 import { SelectedBurgerCard } from "@/components/orders/burger-item-card";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
 
 interface BurgersStepProps {
   availableBurgers: Burger[];
@@ -57,6 +59,7 @@ export function BurgersStep({
   friesExtra,
   extrasByCategory,
 }: BurgersStepProps) {
+  const preset = useMemo(() => getActivePreset(), []);
   // Cuenta cuántas veces fue agregada cada burger
   const burgerCount = selectedBurgers.reduce(
     (acc, item) => {
@@ -70,7 +73,9 @@ export function BurgersStep({
     <div className="space-y-6">
       {/* Available Burgers */}
       <div>
-        <h3 className="mb-3 text-sm font-medium">Seleccionar hamburguesas</h3>
+        <h3 className="mb-3 text-sm font-medium">
+          Seleccionar {preset.lexicon.product.plural}
+        </h3>
         <div className="grid grid-cols-2 gap-3">
           {availableBurgers?.map((burger) => {
             const qty = burgerCount[burger.id] ?? 0;

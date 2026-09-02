@@ -8,7 +8,7 @@ export interface TestSelectedComboSlot {
   maxQuantity: number;
   defaultMeatCount?: number;
   burgers: SelectedBurger[];
-  selectedExtra: { id: string; name: string; price: number } | null;
+  selectedExtras: Array<{ id: string; name: string; price: number }>;
 }
 
 export interface TestSelectedCombo {
@@ -79,7 +79,7 @@ export function makeSelectedComboSlot(overrides?: Partial<TestSelectedComboSlot>
     maxQuantity: 1,
     defaultMeatCount: undefined,
     burgers: [],
-    selectedExtra: null,
+    selectedExtras: [],
     ...overrides,
   };
 }

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { DemoBanner } from "@/components/demo/demo-banner"
+import { PresetSwitcher } from "@/components/demo/preset-switcher"
 import {
   LayoutDashboard,
   ClipboardList,
@@ -13,6 +14,7 @@ import {
   Component,
   User,
   Users,
+  Wallet,
 } from "lucide-react"
 import {
   Sidebar,
@@ -47,6 +49,7 @@ const navigation = [
   { name: "Combos",      href: "/combos",     icon: Component,       adminOnly: false, operatorBlocked: false },
   { name: "Extras",      href: "/extras",     icon: Plus,            adminOnly: false, operatorBlocked: false },
   { name: "Precios",     href: "/precios",     icon: DollarSign,      adminOnly: false, operatorBlocked: true  },
+  { name: "Finanzas",    href: "/finanzas",   icon: Wallet,          adminOnly: false, operatorBlocked: true  },
   { name: "Usuarios",    href: "/usuarios",   icon: Users,           adminOnly: true,  operatorBlocked: false },
 ]
 
@@ -85,12 +88,13 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
         </div>
         <div
           className={cn(
-            "overflow-hidden transition-all duration-300 ease-in-out",
-            "max-h-20 opacity-100",
+            "overflow-hidden transition-all duration-300 ease-in-out space-y-2",
+            "max-h-32 opacity-100",
             "group-data-[collapsible=icon]:max-h-0 group-data-[collapsible=icon]:opacity-0",
           )}
         >
           <DemoBanner />
+          <PresetSwitcher />
         </div>
       </SidebarHeader>
 

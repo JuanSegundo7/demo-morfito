@@ -126,7 +126,7 @@ describe("OrderPriceCalculator.calculateCombosTotal", () => {
       slotType: "burger",
       defaultMeatCount: 2,
       burgers: [burger],
-      selectedExtra: null,
+      selectedExtras: [],
     });
     const combo = makeSelectedCombo({
       combo: { id: "c1", name: "Combo", price: 1500 },
@@ -138,19 +138,23 @@ describe("OrderPriceCalculator.calculateCombosTotal", () => {
     expect(OrderPriceCalculator.calculateCombosTotal([combo as any], meatExtra, null)).toBe(1700);
   });
 
-  it("slot drink con selectedExtra.price=300 y qty=2: NO multiplica selectedExtra por qty", () => {
+  it("slot drink con selectedExtras[0].price=300: la elección NO suma cargo, ya está incluida en el precio del combo", () => {
+    // Deliberate design (commit 7f8aa20 "update combos logic and fries"):
+    // a drink/fries/side slot's selectedExtras only records WHICH allowed
+    // option fills the slot ("Elegir Bebida" picker in combos-step.tsx) —
+    // it is never an upcharge, regardless of that extra's own catalog price.
     const slot = makeSelectedComboSlot({
       slotType: "drink",
       burgers: [],
-      selectedExtra: { id: "ex1", name: "Bebida", price: 300 },
+      selectedExtras: [{ id: "ex1", name: "Bebida", price: 300 }],
     });
     const combo = makeSelectedCombo({
       combo: { id: "c1", name: "Combo", price: 1500 },
       quantity: 2,
       slots: [slot],
     });
-    // comboBase=1500*2=3000, selectedExtra=300 (no multiplica qty) → 3300
-    expect(OrderPriceCalculator.calculateCombosTotal([combo as any], null, null)).toBe(3300);
+    // comboBase=1500*2=3000, la bebida elegida no agrega nada → 3000
+    expect(OrderPriceCalculator.calculateCombosTotal([combo as any], null, null)).toBe(3000);
   });
 
   it("devuelve 0 para array vacío", () => {

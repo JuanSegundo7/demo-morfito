@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,8 @@ import type { Burger, Extra } from "@/lib/types";
 import { SelectedBurgerCard } from "@/components/orders/burger-item-card";
 import { ExtraSelector } from "../components/extra-selector";
 import { ComboSnapshot, ComboWithSlots } from "@/lib/types/combo-types";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { capitalize } from "@/lib/demo/presets/lexicon";
 
 interface CombosStepProps {
   availableCombos: ComboWithSlots[];
@@ -101,6 +104,7 @@ export function CombosStep({
   friesExtra,
   extrasByCategory,
 }: CombosStepProps) {
+  const preset = useMemo(() => getActivePreset(), []);
   // Cantidad de instancias por combo id para el badge
   const comboCount = selectedCombos.reduce(
     (acc, c) => {
@@ -175,7 +179,8 @@ export function CombosStep({
                 <Card key={slot.slotId}>
                   <CardContent className="space-y-3 p-4">
                     <h5 className="text-sm font-medium">
-                      Hamburguesas ({remaining} disponibles)
+                      {capitalize(preset.lexicon.product.plural)} ({remaining}{" "}
+                      disponibles)
                     </h5>
 
                     <div className="space-y-2">

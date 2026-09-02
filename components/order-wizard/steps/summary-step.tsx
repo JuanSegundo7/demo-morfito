@@ -8,6 +8,8 @@ import { User, MapPin, Phone, Info, AlertCircle, Clock } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
 import { CustomerAddress } from "@/lib/types";
 import { useMemo, useEffect, useRef } from "react";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { capitalize } from "@/lib/demo/presets/lexicon";
 import {
   Tooltip,
   TooltipContent,
@@ -137,6 +139,7 @@ export function SummaryStep({
   onDeliveryTimeChange,
   deliveryTime,
 }: SummaryStepProps) {
+  const preset = useMemo(() => getActivePreset(), []);
   const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -491,7 +494,9 @@ export function SummaryStep({
                         </p>
                         {diffMeat > 0 && meatExtra && (
                           <p className="text-xs text-muted-foreground">
-                            • + {diffMeat}x Medallón extra{" "}
+                            • + {diffMeat}x{" "}
+                            {capitalize(preset.lexicon.mainComponent.singular)}{" "}
+                            extra{" "}
                             <span className="text-primary font-medium">
                               +{formatCurrency(diffMeat * meatExtra.price * item.quantity)}
                             </span>
@@ -603,7 +608,9 @@ export function SummaryStep({
                               </p>
                               {meatDiff > 0 && meatExtra && (
                                 <p className="text-xs text-muted-foreground">
-                                  • + {meatDiff}x Medallón extra{" "}
+                                  • + {meatDiff}x{" "}
+                                  {capitalize(preset.lexicon.mainComponent.singular)}{" "}
+                                  extra{" "}
                                   <span className="text-primary font-medium">
                                     +{formatCurrency(meatDiff * meatExtra.price * b.quantity)}
                                   </span>

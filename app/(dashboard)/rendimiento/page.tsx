@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,8 @@ import {
 } from "@/lib/hooks/orders/use-orders-history";
 import { formatCurrency } from "@/lib/utils/format";
 import { ExternalIncomePanel } from "@/components/analytics/external-income-panel";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
+import { capitalize } from "@/lib/demo/presets/lexicon";
 import {
   ChartContainer,
   ChartTooltip,
@@ -134,6 +136,7 @@ const RANK_CONFIG = [
 ];
 
 export default function AnalyticsPage() {
+  const preset = useMemo(() => getActivePreset(), []);
   const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -431,11 +434,11 @@ export default function AnalyticsPage() {
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
-                  { label: "Burgers", value: productStats?.totalBurgers ?? 0, emoji: "🍔" },
+                  { label: capitalize(preset.lexicon.product.plural), value: productStats?.totalBurgers ?? 0, emoji: preset.lexicon.product.emoji ?? "🍔" },
                   { label: "Combos", value: productStats?.totalCombos ?? 0, emoji: "🎁" },
-                  { label: "Medallones", value: productStats?.totalMedallones ?? 0, emoji: "🥩" },
-                  { label: "Papas Fritas", value: productStats?.totalFries ?? 0, emoji: "🍟" },
-                  { label: "Acompañamientos", value: productStats?.totalSides ?? 0, emoji: "🍗" },
+                  { label: capitalize(preset.lexicon.mainComponent.plural), value: productStats?.totalMedallones ?? 0, emoji: preset.lexicon.mainComponent.emoji ?? "🥩" },
+                  { label: capitalize(preset.lexicon.sideComponent.plural), value: productStats?.totalFries ?? 0, emoji: preset.lexicon.sideComponent.emoji ?? "🍟" },
+                  { label: preset.lexicon.categoryLabels.sides, value: productStats?.totalSides ?? 0, emoji: "🍗" },
                 ].map((item) => (
                   <div
                     key={item.label}
