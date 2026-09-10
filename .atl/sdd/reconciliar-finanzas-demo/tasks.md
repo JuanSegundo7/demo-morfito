@@ -130,50 +130,54 @@ and is already correct (cross-month proration, unconditional non-monthly skip); 
 production consumers today — the hook calls the grouped `expandRecurringExpenses` instead. This phase
 is a call-site swap + a date bucket, not new arithmetic. The proration engine itself is **not touched**.
 
-- [ ] 2.1 `[hook,small]` Modify `lib/hooks/orders/use-orders-history.ts` — swap the current-period call
+- [x] 2.1 `[hook,small]` Modify `lib/hooks/orders/use-orders-history.ts` — swap the current-period call
       (`:519-523`) from `expandRecurringExpenses(...)` to `expandRecurringExpensesDaily(...)`, same
       three arguments. `recurringTotal` (`:524`) and `expensesByCategory`'s fold (`:558-560`) are
       unchanged — `DailyRecurringAllocation` is a structural superset of `RecurringExpenseAllocation`
       (adds `date`, `templateId`, `isProrated`). *(design D2)*
-- [ ] 2.2 `[hook,small]` Modify `use-orders-history.ts` — swap the previous-period twin call
+- [x] 2.2 `[hook,small]` Modify `use-orders-history.ts` — swap the previous-period twin call
       (`:539-543`) the same way, for symmetry with 2.1 (the two blocks are written as visual twins per
       the file's own comment). `expandRecurringExpenses` is NOT deleted — it stays exported, unused by
       this hook but correct and potentially useful elsewhere. *(design D2)*
-- [ ] 2.3 `[hook,small]` Modify `use-orders-history.ts` — add a `recurringByDate: Record<string,
+- [x] 2.3 `[hook,small]` Modify `use-orders-history.ts` — add a `recurringByDate: Record<string,
       DailyRecurringAllocation[]>` bucket built right after the `commissionByDate` accumulator
       (`:587-594`, which stays untouched), using the same `if (!bucket[key]) bucket[key] = []` shape as
       the existing `expensesByDate` bucket (`:573-581`); skip allocations with `amount === 0`. Required
       because `expandRecurringExpensesDaily` emits template-major, not date-major.
-- [ ] 2.4 `[hook,medium]` Modify `use-orders-history.ts` — inside the existing `for (const day of
+- [x] 2.4 `[hook,medium]` Modify `use-orders-history.ts` — inside the existing `for (const day of
       dailyData)` loop (`:598-645`), after the one-off expense block closes, push one ledger row per
       bucketed allocation for that day: `date: day.date`, `concept: a.description`, `kind: "expense"`,
       `isProrated: true`, `amount: a.amount`, decrementing `runningBalance` before each push — same
       pattern as the one-off block immediately above it. *(spec: daily-ledger — C7 resolved per-day)*
-- [ ] 2.5 `[hook,small]` Modify `use-orders-history.ts` — **delete** the lump-at-`endDateStr` block
+- [x] 2.5 `[hook,small]` Modify `use-orders-history.ts` — **delete** the lump-at-`endDateStr` block
       (`:647-672`, the 14-line rationale comment + the loop) now that 2.4 emits the same rows per day
       instead of once at period close.
-- [ ] 2.6 `[hook,small]` Modify `use-orders-history.ts` — **delete** `ledgerClosingBalance` (`:674-678`)
+- [x] 2.6 `[hook,small]` Modify `use-orders-history.ts` — **delete** `ledgerClosingBalance` (`:674-678`)
       and its key in the returned object (`:699`). `page.tsx:263` already reads `analytics?.netRevenue`
       directly; zero other consumers exist. *(design D5)*
-- [ ] 2.7 `[comment,small]` Modify `app/(dashboard)/finanzas/page.tsx` — rewrite the comment above
+- [x] 2.7 `[comment,small]` Modify `app/(dashboard)/finanzas/page.tsx` — rewrite the comment above
       `dailyIncomeVsExpense` (`:162-166`), which currently asserts `sum(expense) === expensesTotal`
       ("verified by hand during implementation") — **false** for any period with a PedidosYa order.
       Correct it to state `sum(expense) === expensesTotal + commissionTotal`, naming commission rows as
       the reason, and drop the "verified by hand" claim. **Comment only — the `useMemo` body is
       untouched.** *(design D4; spec: daily-ledger — Domain 2, rule 3)*
-- [ ] 2.8 `[test,small]` Modify `lib/utils/__tests__/expenses.test.ts` (from PR1) — add: two monthly
+- [x] 2.8 `[test,small]` Modify `lib/utils/__tests__/expenses.test.ts` (from PR1) — add: two monthly
       templates over a 3-day period ⇒ 6 `isProrated: true` allocations from
       `expandRecurringExpensesDaily`, 2 per day, each keeping its own `description`. Never a lump.
-- [ ] 2.9 `[test,small]` Modify `lib/utils/__tests__/net-revenue.test.ts` (from PR1) — add: the same
+- [x] 2.9 `[test,small]` Modify `lib/utils/__tests__/net-revenue.test.ts` (from PR1) — add: the same
       fixture through the pre-PR2 grouped shape and the post-PR2 per-day shape produces the same
       `expensesTotal`, `expensesByCategory`, `commissionTotal`, `netRevenue` within `1e-9` tolerance —
       only ledger row count and dates differ. **This is the review contract for PR2: re-run rule 4
       (task 1.11) against the new per-day ledger and confirm it still holds.**
-- [ ] 2.10 `[test,small]` Add case: an allocation or expense with `amount === 0` emits no row; an empty
+- [x] 2.10 `[test,small]` Add case: an allocation or expense with `amount === 0` emits no row; an empty
       period emits `[]`.
-- [ ] 2.11 `[gate,small]` Run `npx vitest run` — full suite green (Phase 1 + 2.8-2.10).
-- [ ] 2.12 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY.
-- [ ] 2.13 `[gate,small]` Run `eslint .` — MANDATORY.
+- [x] 2.11 `[gate,small]` Run `npx vitest run` — full suite green (Phase 1 + 2.8-2.10). **145/145
+      passed** (141 pre-existing + 4 new), 7 test files.
+- [x] 2.12 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY. **0 errors**,
+      same as PR1's baseline.
+- [ ] 2.13 `[gate,small]` Run `eslint .` — MANDATORY. **BLOCKED, pre-existing** — same infra gap as
+      task 1.14 (`eslint` not installed, no `eslint.config.*`). Not something this PR introduces or
+      can fix within scope; `tsc` and `vitest` both gate cleanly.
 
 **Explicitly NOT touched in this phase** (per design's untouched-lines table): `lib/utils/expenses.ts`
 (engine unchanged), `components/finanzas/net-revenue-card.tsx`, `components/finanzas/daily-ledger.tsx`,

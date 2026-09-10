@@ -161,9 +161,13 @@ function FinanzasPageContent() {
 
   // Daily income vs. expense series for the chart, grouped from
   // `analytics.ledger` client-side (ledger already carries date/kind/amount
-  // per movement — no new query). Sum of `income` across days must equal
-  // `analytics.totalRevenue`, and sum of `expense` must equal
-  // `analytics.expensesTotal` (verified by hand during implementation).
+  // per movement — no new query). Sum of `income` across days equals
+  // `analytics.totalRevenue`; sum of `expense` equals
+  // `analytics.expensesTotal + analytics.commissionTotal` — NOT
+  // expensesTotal alone, because PedidosYa commission rows carry
+  // kind: "expense" while living outside expensesTotal (see
+  // use-orders-history.ts's commissionByDate block). Pinned by the rule-3
+  // assertion in lib/utils/__tests__/net-revenue.test.ts.
   const dailyIncomeVsExpense = useMemo<DailyIncomeVsExpenseRow[]>(() => {
     const byDate = new Map<string, DailyIncomeVsExpenseRow>();
     for (const entry of analytics?.ledger ?? []) {

@@ -3,14 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Order, ExpenseCategory, RecurringExpense, OrderSource } from "@/lib/types";
-import { expandRecurringExpenses } from "../../utils/expenses";
+import { expandRecurringExpensesDaily, type DailyRecurringAllocation } from "../../utils/expenses";
 import { orderSourceConfig } from "../../utils/order-source";
 import { TZ, toArDateStr, arDateToUTC, getWeekRange, getMonthRange } from "../../utils/date-ar";
 
 // Build a pure UTC-midnight calendar Date from a "YYYY-MM-DD" string, with
 // no time-of-day component. Unlike `arDateToUTC` (which encodes an AR-local
 // instant, offset +3h), this is for calendar-date-only math — the kind
-// `expandRecurringExpenses` needs, since `start`/`end` in this file carry
+// `expandRecurringExpensesDaily` needs, since `start`/`end` in this file carry
 // AR-local time-of-day info baked into their UTC instant and would
 // off-by-one the day-boundary comparisons inside proration.
 function dateStrToCalendarUTC(dateStr: string): Date {
@@ -314,7 +314,7 @@ export function useOrdersAnalytics(
           .select("date, amount, category, description")
           .gte("date", startDateStr)
           .lte("date", endDateStr),
-        // All recurring_expenses (no date filter) — expandRecurringExpenses
+        // All recurring_expenses (no date filter) — expandRecurringExpensesDaily
         // needs every template to decide which ones overlap the period.
         supabase.from("recurring_expenses").select("*"),
         // Previous-period one-off expenses — same shape as the current-period
@@ -503,7 +503,7 @@ export function useOrdersAnalytics(
       // counts against the period it was paid in). One-off `expenses` are
       // already scoped to the period by the query above; recurring
       // templates are prorated by calendar-month day counts via
-      // `expandRecurringExpenses`.
+      // `expandRecurringExpensesDaily`.
       //
       // `start`/`end` above are AR-local instants (arDateToUTC bakes in a
       // +3h offset for the AR->UTC conversion), not pure calendar dates —
@@ -516,7 +516,7 @@ export function useOrdersAnalytics(
 
       const periodExpensesTotal =
         expenses?.reduce((acc, e) => acc + Number(e.amount), 0) || 0;
-      const recurringAllocations = expandRecurringExpenses(
+      const recurringAllocations = expandRecurringExpensesDaily(
         (recurringExpenses ?? []) as RecurringExpense[],
         calendarPeriodStart,
         calendarPeriodEnd
@@ -530,13 +530,13 @@ export function useOrdersAnalytics(
       // Purely additive: mirrors the current-period calculation above with
       // the previous period's calendar bounds, reusing the same
       // `recurringExpenses` templates (period-independent) and the same
-      // `expandRecurringExpenses` pure function.
+      // `expandRecurringExpensesDaily` pure function.
       const calendarPrevPeriodStart = dateStrToCalendarUTC(prevStartDateStr);
       const calendarPrevPeriodEnd = dateStrToCalendarUTC(prevEndDateStr);
 
       const prevPeriodExpensesTotal =
         prevExpenses?.reduce((acc, e) => acc + Number(e.amount), 0) || 0;
-      const prevRecurringAllocations = expandRecurringExpenses(
+      const prevRecurringAllocations = expandRecurringExpensesDaily(
         (recurringExpenses ?? []) as RecurringExpense[],
         calendarPrevPeriodStart,
         calendarPrevPeriodEnd
@@ -593,6 +593,19 @@ export function useOrdersAnalytics(
         commissionByDate[key] = (commissionByDate[key] ?? 0) + amount;
       }
 
+      // Per-day prorated recurring-expense allocations, bucketed by date.
+      // `expandRecurringExpensesDaily` emits template-major (its outer loop
+      // is templates, expenses.ts:190), not date-major, so the array can't
+      // be walked in ledger order directly — this re-buckets it the same way
+      // `expensesByDate` above re-buckets one-off expenses. Zero-amount
+      // allocations are skipped, same convention as the one-off block below.
+      const recurringByDate: Record<string, DailyRecurringAllocation[]> = {};
+      for (const a of recurringAllocations) {
+        if (a.amount === 0) continue;
+        if (!recurringByDate[a.date]) recurringByDate[a.date] = [];
+        recurringByDate[a.date].push(a);
+      }
+
       const ledger: LedgerEntry[] = [];
       let runningBalance = 0;
       for (const day of dailyData) {
@@ -642,40 +655,28 @@ export function useOrdersAnalytics(
             balance: runningBalance,
           });
         }
+        // One row PER RECURRING TEMPLATE, on the day it was actually
+        // prorated for — not a single lump at period close. Reuses
+        // `recurringAllocations` (already computed above for
+        // expensesByCategory) so the ledger can never disagree with the KPI
+        // totals about how much each template contributed. `concept` is the
+        // template's own description ("Luz", "Alquiler", ...) — the
+        // `isProrated: true` flag alone marks it as smoothed in the UI
+        // badge. Within-day order follows the allocations array's own
+        // (deterministic, insertion) order — see expenses.ts's
+        // expandRecurringExpensesDaily doc comment; no sort is added.
+        for (const a of recurringByDate[day.date] ?? []) {
+          runningBalance -= a.amount;
+          ledger.push({
+            date: day.date,
+            concept: a.description,
+            kind: "expense",
+            isProrated: true,
+            amount: a.amount,
+            balance: runningBalance,
+          });
+        }
       }
-
-      // One row PER RECURRING TEMPLATE for the whole period's prorated fixed
-      // costs, placed at period close — instead of ~30 near-identical rows
-      // per template (one per day) or a single anonymous lump. Reuses
-      // `recurringAllocations` (already computed above for
-      // expensesByCategory) so the ledger can never disagree with the KPI
-      // totals about how much each template contributed. `concept` is the
-      // template's own description ("Luz", "Alquiler", ...) — the
-      // `isProrated: true` flag alone marks it as smoothed in the UI badge,
-      // so the text itself doesn't repeat "prorrateado". The running
-      // balance on every day up to this point is therefore higher than its
-      // "true" smoothed value until these rows land; that's the deliberate
-      // tradeoff (fewer rows, a visible step down instead of a gradual
-      // daily decline). The final balance is unaffected — it's the same
-      // total either way, since it's the same amounts deducted.
-      for (const a of recurringAllocations) {
-        if (a.amount === 0) continue;
-        runningBalance -= a.amount;
-        ledger.push({
-          date: endDateStr,
-          concept: a.description,
-          kind: "expense",
-          isProrated: true,
-          amount: a.amount,
-          balance: runningBalance,
-        });
-      }
-
-      // Displayed total comes from `netRevenue` directly (already computed
-      // above via currentRevenue - expensesTotal), never from re-summing
-      // `ledger` entries — keeps the ledger's own sub-cent float drift (see
-      // expandRecurringExpensesDaily) from ever reaching the UI's total.
-      const ledgerClosingBalance = netRevenue;
 
       return {
         completedOrders: currentCompleted,
@@ -696,7 +697,6 @@ export function useOrdersAnalytics(
         sourceBreakdown,
         commissionTotal,
         ledger,
-        ledgerClosingBalance,
       };
     },
   });

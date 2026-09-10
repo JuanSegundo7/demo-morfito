@@ -153,6 +153,34 @@ describe("walkOccurrenceGrid — window-before-anchor clamp", () => {
 });
 
 // ---------------------------------------------------------------------------
+// 2.8 (PR2) — two monthly templates over a 3-day period produce per-day rows,
+// never a lump — see .atl/sdd/reconciliar-finanzas-demo/tasks.md Phase 2.
+// ---------------------------------------------------------------------------
+describe("expandRecurringExpensesDaily — multiple templates, per-day rows (PR2, C7)", () => {
+  it("two monthly templates over a 3-day period yield 6 isProrated allocations, 2 per day, each keeping its own description", () => {
+    const templates: RecurringExpense[] = [
+      makeTemplate({ id: "tmpl-rent", description: "Alquiler local", amount: 31000, category: "rent" }),
+      makeTemplate({ id: "tmpl-internet", description: "Internet y servicios", amount: 3100, category: "services" }),
+    ];
+    const periodStart = parseDateUTC("2026-03-10");
+    const periodEnd = parseDateUTC("2026-03-12");
+
+    const allocations = expandRecurringExpensesDaily(templates, periodStart, periodEnd);
+
+    expect(allocations).toHaveLength(6); // 2 templates x 3 days, never a single lump row
+    expect(allocations.every((a) => a.isProrated)).toBe(true);
+
+    for (const date of ["2026-03-10", "2026-03-11", "2026-03-12"]) {
+      const rowsForDay = allocations.filter((a) => a.date === date);
+      expect(rowsForDay).toHaveLength(2);
+      expect(rowsForDay.map((a) => a.description).sort()).toEqual(
+        ["Alquiler local", "Internet y servicios"].sort()
+      );
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 1.6 — expandRecurringExpenses (grouped) agrees with expandRecurringExpensesDaily
 // ---------------------------------------------------------------------------
 describe("expandRecurringExpenses — structural agreement with expandRecurringExpensesDaily", () => {

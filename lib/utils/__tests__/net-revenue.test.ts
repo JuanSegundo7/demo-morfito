@@ -25,7 +25,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { useOrdersAnalytics } from "@/lib/hooks/orders/use-orders-history";
 import { useDemoStore } from "@/lib/demo/store";
-import type { Order, Expense } from "@/lib/types";
+import { expandRecurringExpenses, parseDateUTC } from "@/lib/utils/expenses";
+import type { Order, Expense, RecurringExpense } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Wrapper (no JSX — this file keeps the .test.ts extension tasks.md names)
@@ -74,6 +75,22 @@ function makeExpense(overrides: Partial<Expense> & Pick<Expense, "amount" | "dat
     id: crypto.randomUUID(),
     description: null,
     created_at: `${overrides.date}T00:00:00.000Z`,
+    ...overrides,
+  };
+}
+
+function makeRecurringTemplate(
+  overrides: Partial<RecurringExpense> = {}
+): RecurringExpense {
+  return {
+    id: crypto.randomUUID(),
+    amount: 3100,
+    category: "rent",
+    description: "Alquiler local",
+    frequency: "monthly",
+    start_date: "2026-01-01",
+    end_date: null,
+    created_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -270,5 +287,106 @@ describe("useOrdersAnalytics — ledger expense rows sum to expensesTotal + comm
     expect(sumExpenseRows).toBe(30000); // expensesTotal (20000) + commissionTotal (10000)
     expect(sumExpenseRows).not.toBe(data.expensesTotal); // NOT expensesTotal (20000) alone
     expect(sumExpenseRows).toBe(data.expensesTotal + data.commissionTotal);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PR2 (C7/D1/D2) — grouped vs per-day recurring proration agree; the review
+// contract is that no total moves, only the ledger's row shape changes.
+// ---------------------------------------------------------------------------
+describe("useOrdersAnalytics — per-day prorated ledger rows agree with the pre-PR2 grouped totals (D2 review contract)", () => {
+  it("expensesTotal, expensesByCategory, commissionTotal and netRevenue match the grouped shape within 1e-9; only ledger row count/dates differ", async () => {
+    const template = makeRecurringTemplate({
+      id: "tmpl-alquiler",
+      description: "Alquiler local",
+      amount: 3100,
+      category: "rent",
+      frequency: "monthly",
+      start_date: "2026-01-01",
+      end_date: null,
+    });
+    const orders: Order[] = [
+      makeOrder({
+        total_amount: 50000,
+        updated_at: "2026-03-01T15:00:00.000Z",
+        source: "local",
+        commission_amount: 0,
+      }),
+      makeOrder({
+        total_amount: 20000,
+        updated_at: "2026-03-02T15:00:00.000Z",
+        source: "pedidosya",
+        commission_amount: 5000,
+      }),
+    ];
+    const expenses: Expense[] = [
+      makeExpense({ amount: 20000, date: "2026-03-01", category: "supplies" }),
+    ];
+    useDemoStore.setState({ orders, expenses, recurring_expenses: [template] });
+
+    const data = await runAnalytics();
+
+    // Independently recomputed via the still-exported grouped
+    // `expandRecurringExpenses`, over the same calendar bounds the hook
+    // derives internally from the custom range (2026-03-01..02, AR-local).
+    const periodStart = parseDateUTC("2026-03-01");
+    const periodEnd = parseDateUTC("2026-03-02");
+    const grouped = expandRecurringExpenses([template], periodStart, periodEnd);
+    const groupedRecurringTotal = grouped.reduce((acc, a) => acc + a.amount, 0);
+    const expectedExpensesTotal = 20000 + groupedRecurringTotal;
+
+    expect(Math.abs(data.expensesTotal - expectedExpensesTotal)).toBeLessThan(1e-9);
+    expect(Math.abs(data.expensesByCategory.rent - groupedRecurringTotal)).toBeLessThan(1e-9);
+    expect(data.expensesByCategory.supplies).toBe(20000);
+    expect(data.commissionTotal).toBe(5000);
+
+    const expectedNetRevenue = 70000 - expectedExpensesTotal - 5000;
+    expect(Math.abs(data.netRevenue - expectedNetRevenue)).toBeLessThan(1e-9);
+
+    // Review contract: one prorated row PER DAY (1 template x 2 days = 2
+    // rows), dated the actual day — never a single lump at `endDateStr`.
+    const proratedRows = data.ledger.filter((row) => row.isProrated);
+    expect(proratedRows).toHaveLength(2);
+    expect(proratedRows.map((r) => r.date).sort()).toEqual(["2026-03-01", "2026-03-02"]);
+    for (const row of proratedRows) {
+      expect(row.concept).toBe("Alquiler local");
+    }
+
+    // Rule 4, re-run against the new per-day ledger shape: the last row's
+    // running balance still equals netRevenue exactly.
+    const lastRow = data.ledger[data.ledger.length - 1];
+    expect(lastRow.balance).toBe(data.netRevenue);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PR2 — zero-amount allocations emit no row; a fully empty period emits []
+// ---------------------------------------------------------------------------
+describe("useOrdersAnalytics — zero-amount and empty-period guards (PR2)", () => {
+  it("a recurring template with amount 0 contributes no prorated ledger row", async () => {
+    const zeroTemplate = makeRecurringTemplate({
+      id: "tmpl-zero",
+      description: "Plantilla en cero",
+      amount: 0,
+      category: "other",
+      frequency: "monthly",
+      start_date: "2026-01-01",
+      end_date: null,
+    });
+    useDemoStore.setState({ orders: [], expenses: [], recurring_expenses: [zeroTemplate] });
+
+    const data = await runAnalytics();
+
+    expect(data.ledger.filter((row) => row.isProrated)).toHaveLength(0);
+    expect(data.expensesByCategory.other).toBe(0);
+  });
+
+  it("an entirely empty period (no orders, expenses or templates) produces an empty ledger", async () => {
+    useDemoStore.setState({ orders: [], expenses: [], recurring_expenses: [] });
+
+    const data = await runAnalytics();
+
+    expect(data.ledger).toEqual([]);
+    expect(data.netRevenue).toBe(0);
   });
 });
