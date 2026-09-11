@@ -216,29 +216,29 @@ Still opaque in dark mode — `--card` has not moved yet (PR3). Independently sh
 Hard, mutual dependency with PR2 (see the note in the Review Workload Forecast section): this PR makes
 PR2's retint actually translucent, and would be pointless without PR2 already shipped.
 
-- [ ] 3.1 `[code-checkable via grep/tsc]` In `app/globals.css`, repoint exactly 10 lines to material
+- [x] 3.1 `[code-checkable via grep/tsc]` In `app/globals.css`, repoint exactly 10 lines to material
       aliases, both themes: `--card` → `var(--material-thin)` (light `:14`, dark `:62`); `--popover` →
       `var(--material-thick)` (light `:16`, dark `:66`); `--sidebar` → `var(--material-thick)` (light
       `:37`, dark `:85`); `--border` → `var(--hairline)` (light `:28`, dark `:77`); `--sidebar-border` →
       `var(--hairline)` (light `:43`, dark `:91`). No other token (`--input`, `--secondary`, `--muted`,
       `--accent`, `--ring`, chart palette, `--radius`) changes — R7 gate.
-- [ ] 3.2 `[code-checkable via grep/tsc]` In `components/ui/popover.tsx:33`, **replace** `bg-popover`
+- [x] 3.2 `[code-checkable via grep/tsc]` In `components/ui/popover.tsx:33`, **replace** `bg-popover`
       with `material-thick` (Decision 7 — `material-thick`, not jebbs' `material-regular`; keeps the
       class in agreement with `--popover`'s own alias). **Replace, never append**: `bg-popover` is
       `order=[background-color]`, `material-thick` is `order=[border-top-color, background-color,
       backdrop-filter]` — appending would let `bg-popover` win the background while `material-thick`'s
       blur still applies, producing a translucent-but-wrong-background element.
-- [ ] 3.3 `[code-checkable via grep/tsc]` Same replace in `components/ui/select.tsx:64`.
-- [ ] 3.4 `[code-checkable via grep/tsc]` Same replace in `components/ui/command.tsx:24`.
-- [ ] 3.5 `[code-checkable via grep/tsc]` Same replace in `components/ui/dropdown-menu.tsx:45` AND
+- [x] 3.3 `[code-checkable via grep/tsc]` Same replace in `components/ui/select.tsx:64`.
+- [x] 3.4 `[code-checkable via grep/tsc]` Same replace in `components/ui/command.tsx:24`.
+- [x] 3.5 `[code-checkable via grep/tsc]` Same replace in `components/ui/dropdown-menu.tsx:45` AND
       `:233` (both sites in the same commit).
-- [ ] 3.6 `[code-checkable via grep/tsc]` Confirm `components/ui/calendar.tsx:77` (`bg-popover
+- [x] 3.6 `[code-checkable via grep/tsc]` Confirm `components/ui/calendar.tsx:77` (`bg-popover
       inset-0 opacity-0`, an invisible hit-target, not a surface) and `hover-card.tsx`, `menubar.tsx`,
       `navigation-menu.tsx`, `context-menu.tsx` (all `bg-popover`, zero import sites anywhere in the
       repo) are left **unchanged** — out of scope, no runtime exposure.
-- [ ] 3.7 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (4 `.tsx` files
+- [x] 3.7 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (4 `.tsx` files
       touched).
-- [ ] 3.8 `[gate,small]` Run `npm test` (`vitest run`) — full suite green.
+- [x] 3.8 `[gate,small]` Run `npm test` (`vitest run`) — full suite green.
 
 ### Manual QA — Phase 3
 

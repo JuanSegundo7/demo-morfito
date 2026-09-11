@@ -11,9 +11,9 @@
 :root {
   --background: #f2f2f7;
   --foreground: #1c1c1e;
-  --card: rgba(255, 255, 255, 0.8);
+  --card: var(--material-thin);
   --card-foreground: #1c1c1e;
-  --popover: rgba(255, 255, 255, 0.95);
+  --popover: var(--material-thick);
   --popover-foreground: #1c1c1e;
   --primary: #007aff;
   --primary-foreground: #ffffff;
@@ -25,7 +25,7 @@
   --accent-foreground: #ffffff;
   --destructive: #ff3b30;
   --destructive-foreground: #ffffff;
-  --border: rgba(120, 120, 128, 0.2);
+  --border: var(--hairline);
   --input: rgba(120, 120, 128, 0.12);
   --ring: #007aff;
   --chart-1: #007aff;
@@ -34,13 +34,13 @@
   --chart-4: #af52de;
   --chart-5: #ff2d92;
   --radius: 12px;
-  --sidebar: rgba(255, 255, 255, 0.7);
+  --sidebar: var(--material-thick);
   --sidebar-foreground: #1c1c1e;
   --sidebar-primary: #007aff;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(120, 120, 128, 0.16);
   --sidebar-accent-foreground: #1c1c1e;
-  --sidebar-border: rgba(120, 120, 128, 0.2);
+  --sidebar-border: var(--hairline);
   --sidebar-ring: #007aff;
   /* iOS Status colors */
   --status-new: #007aff;
@@ -78,9 +78,9 @@
 .dark {
   --background: #09090b;
   --foreground: #fafafa;
-  --card: #18181b;
+  --card: var(--material-thin);
   --card-foreground: #fafafa;
-  --popover: #18181b;
+  --popover: var(--material-thick);
   --popover-foreground: #fafafa;
   --primary: #0a84ff;
   --primary-foreground: #ffffff;
@@ -92,7 +92,7 @@
   --accent-foreground: #fafafa;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #27272a;
+  --border: var(--hairline);
   --input: #27272a;
   --ring: #0a84ff;
   --chart-1: #3b82f6;
@@ -100,13 +100,13 @@
   --chart-3: #f59e0b;
   --chart-4: #a855f7;
   --chart-5: #ec4899;
-  --sidebar: #18181b;
+  --sidebar: var(--material-thick);
   --sidebar-foreground: #fafafa;
   --sidebar-primary: #0a84ff;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #27272a;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #27272a;
+  --sidebar-border: var(--hairline);
   --sidebar-ring: #0a84ff;
   /* Status colors */
   --status-new: #3b82f6;
