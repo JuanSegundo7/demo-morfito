@@ -53,6 +53,24 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
   --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.25);
+  /* Material/glass surface tokens (PR1 — additive; nothing consumes these until PR2+) */
+  --surface-0: #f2f2f7;
+  --surface-1: #ffffff;
+  --surface-2: #f5f5f7;
+  --surface-3: #e9e9ee;
+  --material-thin: rgba(255, 255, 255, 0.72);
+  --material-regular: rgba(255, 255, 255, 0.78);
+  --material-thick: rgba(255, 255, 255, 0.86);
+  --well: rgba(0, 0, 0, 0.04);
+  --blur-thin: 14px;
+  --blur-regular: 28px;
+  --blur-thick: 44px;
+  --blur-scrim: 6px;
+  --material-saturate: 165%;
+  --hairline: rgba(60, 60, 67, 0.13);
+  --hairline-strong: rgba(60, 60, 67, 0.22);
+  --specular: rgba(255, 255, 255, 0.6);
+  --specular-strong: rgba(255, 255, 255, 0.85);
   --solvify: #ff9500;
 }
 
@@ -96,11 +114,29 @@
   --status-ready: #f59e0b;
   --status-completed: #71717a;
   --status-canceled: #ef4444;
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.6);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.7);
+  /* Material/glass surface tokens (PR1 — additive; nothing consumes these until PR2+) */
+  --surface-0: #09090b;
+  --surface-1: #101215;
+  --surface-2: #18181b;
+  --surface-3: #202024;
+  --material-thin: rgba(24, 24, 27, 0.55);
+  --material-regular: rgba(24, 24, 27, 0.72);
+  --material-thick: rgba(15, 15, 17, 0.85);
+  --well: rgba(0, 0, 0, 0.3);
+  --blur-thin: 14px;
+  --blur-regular: 28px;
+  --blur-thick: 44px;
+  --blur-scrim: 6px;
+  --material-saturate: 165%;
+  --hairline: rgba(255, 255, 255, 0.09);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --specular: rgba(255, 255, 255, 0.1);
+  --specular-strong: rgba(255, 255, 255, 0.18);
+  /* Shadows — dark-mode doubled contact+ambient values (design.md Decision 1) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px -8px rgba(0, 0, 0, 0.65), 0 6px 14px -6px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 32px 80px -16px rgba(0, 0, 0, 0.75), 0 12px 28px -12px rgba(0, 0, 0, 0.55);
   --solvify: #ff9500;
 }
 
@@ -131,6 +167,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  /* Material/glass surface tokens (PR1) — additive, generates bg-surface-N and border-hairline on demand */
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -213,5 +256,147 @@
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+  }
+}
+
+/* Material/glass surface utilities (PR1 — additive, unreferenced until PR2+).
+   Emission order here is irrelevant: Tailwind v4 sorts compiled utilities by
+   the CSS properties they declare, then by declaration count, then by name —
+   never by position in this file (design.md Decision 2). Listed alphabetically
+   for readability only. */
+@utility material-thin {
+  background-color: var(--material-thin);
+  backdrop-filter: blur(var(--blur-thin)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--blur-thin)) saturate(var(--material-saturate));
+  border: 1px solid var(--hairline);
+  border-top-color: var(--specular);
+}
+
+@utility material-regular {
+  background-color: var(--material-regular);
+  backdrop-filter: blur(var(--blur-regular)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--blur-regular)) saturate(var(--material-saturate));
+  border: 1px solid var(--hairline);
+  border-top-color: var(--specular);
+}
+
+@utility material-thick {
+  background-color: var(--material-thick);
+  backdrop-filter: blur(var(--blur-thick)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--blur-thick)) saturate(var(--material-saturate));
+  border: 1px solid var(--hairline);
+  border-top-color: var(--specular-strong);
+}
+
+@utility material-well {
+  background-color: var(--well);
+  border: 1px solid var(--hairline);
+}
+
+@utility modal-surface {
+  background-color: var(--material-thick);
+  backdrop-filter: blur(var(--blur-thick)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--blur-thick)) saturate(var(--material-saturate));
+  border: 1px solid var(--hairline);
+  border-top-color: var(--specular-strong);
+  box-shadow: var(--shadow-xl);
+}
+
+@utility scrim {
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(var(--blur-scrim)) saturate(120%);
+  -webkit-backdrop-filter: blur(var(--blur-scrim)) saturate(120%);
+}
+
+/* Accessibility fallbacks for the material/glass system (PR1). Unlayered, so
+   they beat every rule in a named cascade layer regardless of specificity or
+   order (design.md Decision 2 / Deliverable 3). The `.ios-sidebar [data-slot=
+   "sidebar-inner"]` and `.ios-glass` selectors below are inert until PR2/PR5
+   ship those classes — kept here now so the fallback is complete the moment
+   each class lands, with no follow-up edit to this block required. */
+@media (prefers-reduced-transparency: reduce) {
+  .material-thin,
+  .material-regular,
+  .material-thick,
+  .modal-surface,
+  .scrim,
+  .ios-blur {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .material-thin {
+    background-color: var(--surface-1);
+  }
+  .material-regular {
+    background-color: var(--surface-2);
+  }
+  .material-thick,
+  .modal-surface {
+    background-color: var(--surface-3);
+  }
+  .scrim,
+  .ios-blur {
+    background-color: rgba(0, 0, 0, 0.72);
+  }
+  .ios-sidebar [data-slot="sidebar-inner"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: var(--surface-3);
+  }
+  /* .ios-glass has no blur to remove, but its background (--card =
+     --material-thin, alpha 0.55 in dark) stays translucent regardless —
+     ~30 files use it. */
+  .ios-glass {
+    background-color: var(--surface-1);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .dark {
+    --hairline: rgba(255, 255, 255, 0.3);
+    --specular: rgba(255, 255, 255, 0.45);
+    --muted-foreground: #e4e4e7;
+  }
+  :root:not(.dark) {
+    --hairline: rgba(60, 60, 67, 0.36);
+    --specular: rgba(0, 0, 0, 0.16);
+    --muted-foreground: #3c3c43;
+  }
+  .material-thin,
+  .material-regular,
+  .material-thick,
+  .modal-surface {
+    background-color: var(--surface-2);
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .material-thin,
+  .material-regular,
+  .material-thick,
+  .modal-surface {
+    background-color: var(--surface-2);
+  }
+  .ios-sidebar [data-slot="sidebar-inner"] {
+    background-color: var(--surface-3);
+  }
+  .scrim,
+  .ios-blur {
+    background-color: rgba(0, 0, 0, 0.72);
+  }
+}
+
+/* Reduced motion is a SOFTER equivalent, not the absence of feedback.
+   Opacity and colour are preserved; transform/spring/overshoot are neutralised. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-property: opacity, color, background-color, border-color,
+      box-shadow, fill, stroke !important;
+    transition-duration: 160ms !important;
+    animation-duration: 160ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }
