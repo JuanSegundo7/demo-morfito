@@ -151,19 +151,19 @@ jebbs (donor split, R7) — full literal table in `design.md` Deliverable 1.
 
 Still opaque in dark mode — `--card` has not moved yet (PR3). Independently shippable and revertible.
 
-- [ ] 2.1 `[code-checkable via grep/tsc]` In `app/globals.css`, move `.ios-shadow-sm/md/lg/xl` out of
+- [x] 2.1 `[code-checkable via grep/tsc]` In `app/globals.css`, move `.ios-shadow-sm/md/lg/xl` out of
       `@layer base` (`:173-187`) into four `@utility` blocks, bodies unchanged
       (`box-shadow: var(--shadow-*)`), names unchanged.
-- [ ] 2.2 `[code-checkable via grep/tsc]` Convert `.ios-blur` (`:168-170`, currently `background:
+- [x] 2.2 `[code-checkable via grep/tsc]` Convert `.ios-blur` (`:168-170`, currently `background:
       var(--card)`) into an `@utility` block whose body is `scrim`'s (Decision: alias, per
       `jebbs:454-458`) — `background-color: rgba(0,0,0,0.55)` + `backdrop-filter: blur(var(--blur-scrim))
       saturate(120%)` + the `-webkit-` twin.
-- [ ] 2.3 `[code-checkable via grep/tsc]` Convert `.ios-glass` (`:189-192`) into an `@utility` block:
+- [x] 2.3 `[code-checkable via grep/tsc]` Convert `.ios-glass` (`:189-192`) into an `@utility` block:
       `background-color: var(--card)` (unchanged — MUST stay a reference to the same variable, never an
       independent literal, per spec Domain 1), `border-color: var(--hairline)`, `border-top-color:
       var(--specular)`. **No `backdrop-filter` anywhere in the block** — `.ios-glass` stays blur-free by
       design (R9, ~30-file reach).
-- [ ] 2.4 `[code-checkable via grep/tsc]` Rewrite the CSS comment on `.ios-glass` — do NOT port jebbs'
+- [x] 2.4 `[code-checkable via grep/tsc]` Rewrite the CSS comment on `.ios-glass` — do NOT port jebbs'
       verbatim comment (it blames stylesheet order, which is refuted). Write the corrected explanation:
       Tailwind v4 sorts custom utilities by declared CSS property then by candidate name — **never** by
       position in the file — and by that comparator `.ios-glass` (3 declarations) is emitted after
@@ -171,7 +171,7 @@ Still opaque in dark mode — `--card` has not moved yet (PR3). Independently sh
       `box-shadow`/`backdrop-filter` survive and the bug doesn't look wrong at a glance. State the
       prohibition: **never combine `.ios-glass` (or any `.ios-shadow-*`) with `.modal-surface` on the
       same element** — enforced by the unlayered guard shipped in PR5 and by `sdd-verify`'s grep.
-- [ ] 2.5 `[code-checkable via grep/tsc]` In `components/ui/button.tsx:8`, delete `ios-shadow-sm
+- [x] 2.5 `[code-checkable via grep/tsc]` In `components/ui/button.tsx:8`, delete `ios-shadow-sm
       hover:ios-shadow-md` from `buttonVariants`' base string (Decision 6 — fixes F3's alphabetical
       tie-break: `ios-shadow-sm` and `ios-shadow-md` are both `order=[box-shadow], count=1` after the
       `@utility` move, so the comparator falls through to natural-name sort and `"ios-shadow-md" <
@@ -180,7 +180,7 @@ Still opaque in dark mode — `--card` has not moved yet (PR3). Independently sh
       a shadow already declares its own (`default`/`destructive` keep `md`; `outline`'s own
       `hover:ios-shadow-md` finally renders per F2; `ghost`/`link` end up with no shadow, which is
       correct for a ghost button).
-- [ ] 2.6 `[code-checkable via grep/tsc]` **Evidence gate — do not re-derive, cite design.md's own
+- [x] 2.6 `[code-checkable via grep/tsc]` **Evidence gate — do not re-derive, cite design.md's own
       audit.** Confirm (by reading, not re-greping from scratch) that `design.md`'s Verification pass
       table already spot-checked all 26 `ios-glass`+`bg-card` co-occurrence sites (12 of 17 files) and
       confirmed they stay safe because both classes reference the identical `var(--card)` custom
@@ -191,8 +191,8 @@ Still opaque in dark mode — `--card` has not moved yet (PR3). Independently sh
       (`focus-visible:ios-shadow-md`). This is the closed evidence set for "did any component depend on
       `@layer base`'s low specificity" — `design.md` already ran it; this task only registers it as the
       record this PR relies on.
-- [ ] 2.7 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (touches `button.tsx`).
-- [ ] 2.8 `[gate,small]` Run `npm test` (`vitest run`) — full suite green, no new cases expected.
+- [x] 2.7 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (touches `button.tsx`).
+- [x] 2.8 `[gate,small]` Run `npm test` (`vitest run`) — full suite green, no new cases expected.
 
 ### Manual QA — Phase 2
 

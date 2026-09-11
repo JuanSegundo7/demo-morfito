@@ -208,32 +208,6 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  .ios-blur {
-    background: var(--card);
-  }
-
-  /* iOS-style shadows */
-  .ios-shadow-sm {
-    box-shadow: var(--shadow-sm);
-  }
-
-  .ios-shadow-md {
-    box-shadow: var(--shadow-md);
-  }
-
-  .ios-shadow-lg {
-    box-shadow: var(--shadow-lg);
-  }
-
-  .ios-shadow-xl {
-    box-shadow: var(--shadow-xl);
-  }
-
-  .ios-glass {
-    background: var(--card);
-    border: 1px solid var(--border);
-  }
-
   /* Custom scrollbars */
   ::-webkit-scrollbar {
     width: 5px;
@@ -308,12 +282,59 @@
   -webkit-backdrop-filter: blur(var(--blur-scrim)) saturate(120%);
 }
 
+/* Compatibility alias — same body as scrim (design.md Deliverable 2, PR2). */
+@utility ios-blur {
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(var(--blur-scrim)) saturate(120%);
+  -webkit-backdrop-filter: blur(var(--blur-scrim)) saturate(120%);
+}
+
+/* iOS-style shadows (PR2 — moved out of @layer base into @utility so that
+   hover:/focus-visible: variants on these classes actually compile; see
+   design.md F2). Bodies and names unchanged. */
+@utility ios-shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+@utility ios-shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+@utility ios-shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+@utility ios-shadow-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+/* .ios-glass KEEPS its name (~30 files improve for free) and changes MEANING:
+   elevated, translucent, lit — and deliberately WITHOUT blur. It is the cheap
+   material, safe to repeat hundreds of times (R9).
+
+   NEVER combine with .modal-surface on the same element. Tailwind v4 sorts
+   utilities by the CSS properties they declare and then by candidate name —
+   NEVER by the order they are written in this file — and by that ordering
+   .ios-glass (3 declarations) is emitted AFTER .modal-surface (6) and wins
+   background-color / border / border-top-color, leaving the modal at roughly
+   half its intended opacity. The backdrop-filter and box-shadow survive
+   because .ios-glass does not declare them, which is why the bug hid in nine
+   dialogs in jebbs-dashboard before anyone noticed.
+   Moving these blocks around this file will NOT change that. DialogContent /
+   AlertDialogContent / SheetContent already carry modal-surface — do not add
+   anything here. See the .modal-surface.ios-glass guard further down. */
+@utility ios-glass {
+  background-color: var(--card);
+  border: 1px solid var(--hairline);
+  border-top-color: var(--specular);
+}
+
 /* Accessibility fallbacks for the material/glass system (PR1). Unlayered, so
    they beat every rule in a named cascade layer regardless of specificity or
    order (design.md Decision 2 / Deliverable 3). The `.ios-sidebar [data-slot=
-   "sidebar-inner"]` and `.ios-glass` selectors below are inert until PR2/PR5
-   ship those classes — kept here now so the fallback is complete the moment
-   each class lands, with no follow-up edit to this block required. */
+   "sidebar-inner"]` selector below is inert until PR5 ships that class —
+   kept here now so the fallback is complete the moment it lands, with no
+   follow-up edit to this block required. `.ios-glass` now exists (PR2). */
 @media (prefers-reduced-transparency: reduce) {
   .material-thin,
   .material-regular,
