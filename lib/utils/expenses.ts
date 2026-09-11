@@ -12,11 +12,10 @@ export const categoryLabels: Record<ExpenseCategory, string> = {
 };
 
 // Placeholder del campo Descripción en "Nuevo gasto" — un pago puntual.
-// "salaries" usa el nombre del empleado ("ej: Berna") a propósito, no una
-// frase tipo "sueldo de Berna": paydayProgressFor (más abajo) matchea los
-// pagos con su plantilla comparando la descripción tipeada contra
-// template.description de forma exacta, así que el placeholder enseña la
-// convención que el propio contador de sueldos pagados necesita.
+// "salaries" usa el nombre del empleado ("ej: Berna") solo como sugerencia
+// para el operador: paydayProgressFor (más abajo) matchea los pagos con su
+// plantilla por `recurring_expense_id`, nunca por esta descripción, así que
+// editar el texto acá NO afecta a ningún contador.
 export const categoryDescriptionPlaceholder: Record<ExpenseCategory, string> = {
   supplies: "ej: compra semanal de carne",
   services: "ej: factura de luz",
@@ -301,10 +300,8 @@ export function isInformationalPaydayTemplate(template: RecurringExpense): boole
 
 // Payday completion for ONE template within [windowStart, windowEnd]:
 // `expected` = paydays the template's cadence grid lands on inside the
-// window; `loaded` = one-off "salaries" expenses whose description matches
-// the template, inside the same window. Matching by description (not a
-// foreign key — none exists) means editing the description on a logged
-// payment breaks the join; that's a pre-existing tradeoff, not new here.
+// window; `loaded` = expenses linked to this template via
+// `recurring_expense_id`, dated inside the same window.
 export function paydayProgressFor(
   template: RecurringExpense,
   expenses: Expense[] | undefined,
@@ -318,10 +315,22 @@ export function paydayProgressFor(
     windowStart,
     windowEnd
   ).length;
+
+  // Matching is by FK ONLY. Never by description (the "Cargar pago" prefill
+  // lands in an editable input — one corrected typo used to make a logged
+  // payment vanish from its own counter, on screen, during a demo), and
+  // never filtered by category (a weekly `services` cleaning contract is a
+  // first-class case in an 8-rubro demo).
+  const startStr = formatDateUTC(windowStart);
+  const endStr = formatDateUTC(windowEnd);
   const loaded =
     expenses?.filter(
-      (e) => e.category === "salaries" && e.description === template.description
+      (e) =>
+        e.recurring_expense_id === template.id &&
+        e.date >= startStr &&
+        e.date <= endStr
     ).length ?? 0;
+
   return { loaded, expected };
 }
 

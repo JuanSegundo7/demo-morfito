@@ -125,8 +125,10 @@ export function generateSeedExpenses(preset: BusinessPreset): SeedExpenseData {
   // "daysAgo -= N" loop) — otherwise a template whose interval doesn't
   // evenly divide 120 (7 doesn't; 15 does) drifts out of phase with
   // paydayProgressFor's own grid and "loaded" ends up ≠ "expected" by one.
-  // description MUST match the informational template's description
-  // exactly (see paydayProgressFor in lib/utils/expenses.ts). ──
+  // Each pushed expense carries `recurring_expense_id` pointing at its own
+  // template (design D6/D7) — paydayProgressFor matches on that FK, never on
+  // description, so this is the link that makes "N de M pagos cargados" read
+  // correctly from the very first seed load. ──
   const windowStart = toUTCMidnight(addDays(today, -120));
   const windowEnd = toUTCMidnight(today);
   const berna = recurring_expenses.find((t) => t.description === SALARY_BIWEEKLY_DESCRIPTION)!;
@@ -142,6 +144,7 @@ export function generateSeedExpenses(preset: BusinessPreset): SeedExpenseData {
       created_at: toDateOnly(day) + "T10:00:00Z",
       supply_id: null,
       quantity: null,
+      recurring_expense_id: berna.id,
     });
   }
   for (const day of paydayGrid(nahuel.start_date, 7, windowStart, windowEnd)) {
@@ -154,6 +157,7 @@ export function generateSeedExpenses(preset: BusinessPreset): SeedExpenseData {
       created_at: toDateOnly(day) + "T10:00:00Z",
       supply_id: null,
       quantity: null,
+      recurring_expense_id: nahuel.id,
     });
   }
 

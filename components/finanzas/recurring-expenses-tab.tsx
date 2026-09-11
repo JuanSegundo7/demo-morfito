@@ -346,11 +346,7 @@ export function RecurringExpensesTab({
                 <Label>Categoría</Label>
                 <Select
                   value={recurringCategory}
-                  onValueChange={(v) => {
-                    const next = v as ExpenseCategory;
-                    setRecurringCategory(next);
-                    if (next !== "salaries") setRecurringFrequency("monthly");
-                  }}
+                  onValueChange={(v) => setRecurringCategory(v as ExpenseCategory)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -385,27 +381,25 @@ export function RecurringExpensesTab({
               </p>
             )}
 
-            {recurringCategory === "salaries" && (
-              <div className="space-y-1.5">
-                <Label>Frecuencia</Label>
-                <Select
-                  value={recurringFrequency}
-                  onValueChange={(v) => setRecurringFrequency(v as RecurringExpenseFrequency)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">{frequencyLabels.weekly}</SelectItem>
-                    <SelectItem value="biweekly">{frequencyLabels.biweekly}</SelectItem>
-                    <SelectItem value="monthly">{frequencyLabels.monthly}</SelectItem>
-                  </SelectContent>
-                </Select>
-                {recurringPaydayPreview && (
-                  <p className="text-xs text-muted-foreground">{recurringPaydayPreview}</p>
-                )}
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label>Frecuencia</Label>
+              <Select
+                value={recurringFrequency}
+                onValueChange={(v) => setRecurringFrequency(v as RecurringExpenseFrequency)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">{frequencyLabels.weekly}</SelectItem>
+                  <SelectItem value="biweekly">{frequencyLabels.biweekly}</SelectItem>
+                  <SelectItem value="monthly">{frequencyLabels.monthly}</SelectItem>
+                </SelectContent>
+              </Select>
+              {recurringPaydayPreview && (
+                <p className="text-xs text-muted-foreground">{recurringPaydayPreview}</p>
+              )}
+            </div>
 
             <div className="space-y-1.5">
               <Label>Vigente desde</Label>
@@ -493,27 +487,25 @@ export function RecurringExpensesTab({
               </p>
             )}
 
-            {updatingTemplate?.category === "salaries" && (
-              <div className="space-y-1.5">
-                <Label>Frecuencia</Label>
-                <Select
-                  value={updateFrequency}
-                  onValueChange={(v) => setUpdateFrequency(v as RecurringExpenseFrequency)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">{frequencyLabels.weekly}</SelectItem>
-                    <SelectItem value="biweekly">{frequencyLabels.biweekly}</SelectItem>
-                    <SelectItem value="monthly">{frequencyLabels.monthly}</SelectItem>
-                  </SelectContent>
-                </Select>
-                {updatePaydayPreview && (
-                  <p className="text-xs text-muted-foreground">{updatePaydayPreview}</p>
-                )}
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label>Frecuencia</Label>
+              <Select
+                value={updateFrequency}
+                onValueChange={(v) => setUpdateFrequency(v as RecurringExpenseFrequency)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">{frequencyLabels.weekly}</SelectItem>
+                  <SelectItem value="biweekly">{frequencyLabels.biweekly}</SelectItem>
+                  <SelectItem value="monthly">{frequencyLabels.monthly}</SelectItem>
+                </SelectContent>
+              </Select>
+              {updatePaydayPreview && (
+                <p className="text-xs text-muted-foreground">{updatePaydayPreview}</p>
+              )}
+            </div>
 
             <div className="space-y-1.5">
               <Label>Vigente desde</Label>

@@ -5,12 +5,13 @@
 // this is the safety net PR2/PR3 are written against.
 
 import { describe, it, expect } from "vitest";
-import type { RecurringExpense } from "@/lib/types";
+import type { Expense, RecurringExpense } from "@/lib/types";
 import {
   expandRecurringExpensesDaily,
   expandRecurringExpenses,
   walkOccurrenceGrid,
   parseDateUTC,
+  paydayProgressFor,
 } from "../expenses";
 
 // ---------------------------------------------------------------------------
@@ -33,6 +34,15 @@ function makeTemplate(overrides: Partial<RecurringExpense> = {}): RecurringExpen
 
 function sumAmounts(allocations: { amount: number }[]): number {
   return allocations.reduce((acc, a) => acc + a.amount, 0);
+}
+
+function makeExpense(overrides: Partial<Expense> & Pick<Expense, "date" | "category" | "amount">): Expense {
+  return {
+    id: "exp-1",
+    description: null,
+    created_at: `${overrides.date}T00:00:00.000Z`,
+    ...overrides,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -205,5 +215,171 @@ describe("expandRecurringExpenses — structural agreement with expandRecurringE
     expect(grouped.map((g) => g.description).sort()).toEqual(
       ["Alquiler local", "Internet y servicios"].sort()
     ); // the weekly template never reaches the grouped output
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3.2 (PR3, C3/D7) — rename-invariance: paydayProgressFor matches by FK,
+// never by description. Renaming a linked expense's description must not
+// change the counter.
+// ---------------------------------------------------------------------------
+describe("paydayProgressFor — matches by recurring_expense_id, never by description (D7 rename-invariance)", () => {
+  it("3 linked expenses keep counting toward loaded even after one's description is edited", () => {
+    const template = makeTemplate({
+      id: "tmpl-berna",
+      description: "Berna",
+      category: "salaries",
+      frequency: "biweekly",
+      amount: null,
+      start_date: "2026-01-01",
+    });
+    const windowStart = parseDateUTC("2026-03-01");
+    const windowEnd = parseDateUTC("2026-03-31");
+    const expenses: Expense[] = [
+      makeExpense({ date: "2026-03-05", category: "salaries", amount: 180000, recurring_expense_id: "tmpl-berna", description: "Berna" }),
+      makeExpense({ date: "2026-03-15", category: "salaries", amount: 180000, recurring_expense_id: "tmpl-berna", description: "Berna" }),
+      // Description edited by the operator after logging — must still count.
+      makeExpense({ date: "2026-03-28", category: "salaries", amount: 180000, recurring_expense_id: "tmpl-berna", description: "Berna (pago corregido)" }),
+    ];
+
+    const progress = paydayProgressFor(template, expenses, windowStart, windowEnd);
+
+    expect(progress.loaded).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3.3 (PR3, D7) — category-independence: a non-"salaries" weekly template
+// with a linked expense counts toward loaded — no category === "salaries"
+// gate exists anywhere in the predicate.
+// ---------------------------------------------------------------------------
+describe("paydayProgressFor — category-independence (D7)", () => {
+  it("a weekly 'services' template with one linked expense counts it toward loaded", () => {
+    const template = makeTemplate({
+      id: "tmpl-cleaning",
+      description: "Limpieza semanal",
+      category: "services",
+      frequency: "weekly",
+      amount: null,
+      start_date: "2026-01-01",
+    });
+    const windowStart = parseDateUTC("2026-03-01");
+    const windowEnd = parseDateUTC("2026-03-31");
+    const expenses: Expense[] = [
+      makeExpense({ date: "2026-03-10", category: "services", amount: 25000, recurring_expense_id: "tmpl-cleaning", description: "Limpieza" }),
+    ];
+
+    const progress = paydayProgressFor(template, expenses, windowStart, windowEnd);
+
+    expect(progress.loaded).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3.4 (PR3, D7 — finding 4) — window scoping: a linked expense dated outside
+// the window is NOT counted, even though its FK matches. `loaded` previously
+// ignored its own window entirely; this closes that gap.
+// ---------------------------------------------------------------------------
+describe("paydayProgressFor — loaded respects its own window (D7 finding 4)", () => {
+  it("a linked expense dated outside [windowStart, windowEnd] is excluded despite the FK matching", () => {
+    const template = makeTemplate({
+      id: "tmpl-nahuel",
+      description: "Nahuel",
+      category: "salaries",
+      frequency: "weekly",
+      amount: null,
+      start_date: "2026-01-01",
+    });
+    const windowStart = parseDateUTC("2026-03-01");
+    const windowEnd = parseDateUTC("2026-03-31");
+    const expenses: Expense[] = [
+      // Inside the window.
+      makeExpense({ date: "2026-03-10", category: "salaries", amount: 85000, recurring_expense_id: "tmpl-nahuel", description: "Nahuel" }),
+      // FK matches, but dated in April — outside [windowStart, windowEnd].
+      makeExpense({ date: "2026-04-02", category: "salaries", amount: 85000, recurring_expense_id: "tmpl-nahuel", description: "Nahuel" }),
+      // FK matches, but dated in February — outside on the other side.
+      makeExpense({ date: "2026-02-20", category: "salaries", amount: 85000, recurring_expense_id: "tmpl-nahuel", description: "Nahuel" }),
+    ];
+
+    const progress = paydayProgressFor(template, expenses, windowStart, windowEnd);
+
+    expect(progress.loaded).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3.5 (PR3, D7) — an Expense with recurring_expense_id absent/undefined
+// (legacy unlinked payment) counts toward nothing and throws nothing.
+// ---------------------------------------------------------------------------
+describe("paydayProgressFor — legacy unlinked expenses are silently excluded (D7)", () => {
+  it("expenses with no recurring_expense_id count toward nothing, and nothing throws", () => {
+    const template = makeTemplate({
+      id: "tmpl-berna",
+      description: "Berna",
+      category: "salaries",
+      frequency: "biweekly",
+      amount: null,
+      start_date: "2026-01-01",
+    });
+    const windowStart = parseDateUTC("2026-03-01");
+    const windowEnd = parseDateUTC("2026-03-31");
+    const expenses: Expense[] = [
+      // Legacy row: same category/description as the template, but no FK —
+      // the pre-D7 text-based match would have counted this; the FK match
+      // must not.
+      makeExpense({ date: "2026-03-05", category: "salaries", amount: 180000, description: "Berna" }),
+    ];
+
+    expect(() => paydayProgressFor(template, expenses, windowStart, windowEnd)).not.toThrow();
+    expect(paydayProgressFor(template, expenses, windowStart, windowEnd).loaded).toBe(0);
+  });
+
+  it("an undefined expenses array returns loaded: 0, never throws", () => {
+    const template = makeTemplate({
+      id: "tmpl-berna",
+      description: "Berna",
+      category: "salaries",
+      frequency: "biweekly",
+      amount: null,
+      start_date: "2026-01-01",
+    });
+    const windowStart = parseDateUTC("2026-03-01");
+    const windowEnd = parseDateUTC("2026-03-31");
+
+    expect(() => paydayProgressFor(template, undefined, windowStart, windowEnd)).not.toThrow();
+    expect(paydayProgressFor(template, undefined, windowStart, windowEnd).loaded).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3.16 (PR3, C4 — already-true invariant, rule 9 regression pin) —
+// RecurringExpense never carries supply_id/quantity, for category
+// "supplies" too. Zero production lines change here; the assertion itself
+// is the deliverable.
+// ---------------------------------------------------------------------------
+describe("RecurringExpense — never carries supply_id/quantity, including category 'supplies' (C4)", () => {
+  it("a RecurringExpense literal for category 'supplies' has no supply_id or quantity key", () => {
+    const template: RecurringExpense = {
+      id: "tmpl-supplies",
+      amount: 12000,
+      category: "supplies",
+      description: "Insumo fijo mensual",
+      frequency: "monthly",
+      start_date: "2026-01-01",
+      end_date: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    };
+
+    expect("supply_id" in template).toBe(false);
+    expect("quantity" in template).toBe(false);
+
+    // Compile-time pin: RecurringExpense's type must NOT declare these keys.
+    // If a future edit ever adds them, this assignment stops needing the
+    // @ts-expect-error below and `tsc --noEmit` fails on an unused
+    // directive — turning the regression into a build error, not just a
+    // missed runtime assertion.
+    // @ts-expect-error — RecurringExpense has no supply_id field, on purpose.
+    const _neverCompiles: RecurringExpense["supply_id"] = undefined;
+    void _neverCompiles;
   });
 });

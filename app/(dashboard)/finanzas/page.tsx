@@ -193,7 +193,11 @@ function FinanzasPageContent() {
   function handleQuickLogPayment(template: RecurringExpense) {
     goToTab("gastos");
     setGastosSubTab("period");
-    setQuickLogRequest({ description: template.description });
+    setQuickLogRequest({
+      description: template.description,
+      category: template.category,
+      recurringExpenseId: template.id,
+    });
   }
 
   return (

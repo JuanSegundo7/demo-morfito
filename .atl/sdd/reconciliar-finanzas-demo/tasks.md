@@ -201,23 +201,23 @@ is a call-site swap + a date bucket, not new arithmetic. The proration engine it
 No SQL migration — `lib/demo/mock-supabase.ts`'s `Row = Record<string, unknown>` (`:34`) accepts the
 new field with zero shim changes.
 
-- [ ] 3.1 `[types,small]` Modify `lib/types/index.ts` — add `recurring_expense_id?: string | null;` to
+- [x] 3.1 `[types,small]` Modify `lib/types/index.ts` — add `recurring_expense_id?: string | null;` to
       `Expense` (after `quantity`, `:166`), with a doc comment: read by ONE consumer
       (`paydayProgressFor`), which matches on this id and never on description or category. `
       RecurringExpense` is **unchanged**. *(spec: expense-tracking — Domain 5)*
-- [ ] 3.2 RED `[test,small]` Add to `lib/utils/__tests__/expenses.test.ts`: **rename-invariance** — a
+- [x] 3.2 RED `[test,small]` Add to `lib/utils/__tests__/expenses.test.ts`: **rename-invariance** — a
       template with 3 linked expense rows (`recurring_expense_id` matching), one row's `description`
       edited ⇒ `paydayProgressFor`'s `loaded` stays `3`. *(spec: recurring-expense-payment-link — rule
       5)*
-- [ ] 3.3 RED `[test,small]` Add case: **category-independence** — a `weekly` template with `category:
+- [x] 3.3 RED `[test,small]` Add case: **category-independence** — a `weekly` template with `category:
       "services"` and one linked expense ⇒ that expense counts toward `loaded`, proving no `category
       === "salaries"` gate exists. *(spec: rule 6)*
-- [ ] 3.4 RED `[test,small]` Add case: **window scoping** — a linked expense dated outside
+- [x] 3.4 RED `[test,small]` Add case: **window scoping** — a linked expense dated outside
       `[windowStart, windowEnd]` is NOT counted, even though its FK matches (finding 4 — `loaded`
       currently ignores its own window; this closes that gap). *(design D7)*
-- [ ] 3.5 RED `[test,small]` Add case: an `Expense` with `recurring_expense_id` absent/`undefined`
+- [x] 3.5 RED `[test,small]` Add case: an `Expense` with `recurring_expense_id` absent/`undefined`
       (legacy unlinked payment) counts toward nothing and throws nothing.
-- [ ] 3.6 GREEN `[pure,medium]` Modify `lib/utils/expenses.ts` — rewrite `paydayProgressFor`'s `loaded`
+- [x] 3.6 GREEN `[pure,medium]` Modify `lib/utils/expenses.ts` — rewrite `paydayProgressFor`'s `loaded`
       predicate (`:321-324`): match `e.recurring_expense_id === template.id` AND `e.date` within
       `[windowStart, windowEnd]` (string-compare `YYYY-MM-DD`, lexicographic = chronological). Drop the
       `category === "salaries" && description === template.description` match entirely. Rewrite the
@@ -225,50 +225,57 @@ new field with zero shim changes.
       currently teaches operators to type descriptions a specific way for the counter to work — false
       the moment the FK lands). Make 3.2–3.5 pass. Signature is **unchanged**. *(design D7; spec:
       recurring-expense-payment-link — Domain 4)*
-- [ ] 3.7 `[hook,small]` Modify `lib/hooks/use-expenses.ts` — add `recurring_expense_id?: string |
+- [x] 3.7 `[hook,small]` Modify `lib/hooks/use-expenses.ts` — add `recurring_expense_id?: string |
       null;` to `useCreateExpense`'s mutation input (`:109-116`), passed straight through the existing
       `.insert(input)` call (`:117-121`). No other change — the shim accepts the new key.
-- [ ] 3.8 `[types,small]` Modify `components/finanzas/expenses-tab.tsx` — widen `QuickLogRequest`
+- [x] 3.8 `[types,small]` Modify `components/finanzas/expenses-tab.tsx` — widen `QuickLogRequest`
       (`:67`, currently `{ description: string }`) to `{ description: string; category:
       ExpenseCategory; recurringExpenseId: string }`. *(design: quick-log request contract)*
-- [ ] 3.9 `[UI,small]` Modify `expenses-tab.tsx` — add `quickLogTemplateId` state; in the prefill effect
+- [x] 3.9 `[UI,small]` Modify `expenses-tab.tsx` — add `quickLogTemplateId` state; in the prefill effect
       (`:244-253`), replace the hardcoded `setExpenseCategory("salaries")` (`:247`) with
       `setExpenseCategory(quickLogRequest.category)` and add `setQuickLogTemplateId(
       quickLogRequest.recurringExpenseId)`. Amount stays empty (`:249` unchanged — proposal open
       question 3, confirmed keep). *(spec: expense-tracking — "Cargar pago prefills the template's own
       category")*
-- [ ] 3.10 `[UI,small]` Modify `expenses-tab.tsx` — thread `recurring_expense_id: quickLogTemplateId`
+- [x] 3.10 `[UI,small]` Modify `expenses-tab.tsx` — thread `recurring_expense_id: quickLogTemplateId`
       into the create-expense mutation payload; clear `quickLogTemplateId` to `null` in
       `resetExpenseForm` so a manually opened dialog never inherits a stale link.
-- [ ] 3.11 `[UI,small]` Modify `app/(dashboard)/finanzas/page.tsx` — `handleQuickLogPayment`
+- [x] 3.11 `[UI,small]` Modify `app/(dashboard)/finanzas/page.tsx` — `handleQuickLogPayment`
       (`:189-193`, the "Cargar pago" click handler feeding `setQuickLogRequest`) now sends `{
       description: template.description, category: template.category, recurringExpenseId: template.id
       }` instead of `{ description }` alone.
-- [ ] 3.12 `[UI,small]` Modify `components/finanzas/recurring-expenses-tab.tsx` — delete the salaries
+- [x] 3.12 `[UI,small]` Modify `components/finanzas/recurring-expenses-tab.tsx` — delete the salaries
       gate at `:352` (`if (next !== "salaries") setRecurringFrequency("monthly");`); `onValueChange`
       collapses to just `setRecurringCategory(v as ExpenseCategory)`. *(spec:
       recurring-expense-templates — "changing category MUST NOT force frequency back to monthly")*
-- [ ] 3.13 `[UI,small]` Modify `recurring-expenses-tab.tsx` — unwrap the create dialog's Frecuencia
+- [x] 3.13 `[UI,small]` Modify `recurring-expenses-tab.tsx` — unwrap the create dialog's Frecuencia
       `Select` from its `{recurringCategory === "salaries" && (...)}` gate at `:388` — frequency is
       offered for every category.
-- [ ] 3.14 `[UI,small]` Modify `recurring-expenses-tab.tsx` — unwrap the update dialog's Frecuencia
+- [x] 3.14 `[UI,small]` Modify `recurring-expenses-tab.tsx` — unwrap the update dialog's Frecuencia
       `Select` from its `{updatingTemplate?.category === "salaries" && (...)}` gate at `:496`, same
       reason as 3.13.
-- [ ] 3.15 `[seed,small]` Modify `lib/demo/seed/expenses.ts` — the two salary-payment loops (`:135-158`)
+- [x] 3.15 `[seed,small]` Modify `lib/demo/seed/expenses.ts` — the two salary-payment loops (`:135-158`)
       write `recurring_expense_id: berna.id` and `recurring_expense_id: nahuel.id` respectively on each
       pushed expense; rewrite the description-coupling comment (`:123-129`), which currently says
       matching depends on description text. **Ships inside this PR, never after** — otherwise every
       "N de M pagos cargados" counter reads "0 de N" on next reload. *(design: seed-drift risk,
       explicitly called out)*
-- [ ] 3.16 RED `[test,small]` Add case: **rule 9 regression pin (C4, already-true invariant)** —
+- [x] 3.16 RED `[test,small]` Add case: **rule 9 regression pin (C4, already-true invariant)** —
       `RecurringExpense` has no `supply_id`/`quantity` key, and `useCreateRecurringExpense`'s input does
       not accept one, for `category: "supplies"` too. Zero production lines change; the assertion is
       the deliverable. *(spec: recurring-expense-templates — Domain 3, "no recurring template ever
-      writes stock")*
-- [ ] 3.17 `[gate,small]` Run `npx vitest run` — full suite green, including 3.2–3.5 and 3.16 against
-      the seeded fixture (non-zero `loaded` proves the seed link is wired).
-- [ ] 3.18 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY.
-- [ ] 3.19 `[gate,small]` Run `eslint .` — MANDATORY.
+      writes stock")* **Implemented as a runtime key-absence assertion PLUS a `@ts-expect-error`
+      compile-time pin** (`RecurringExpense["supply_id"]` must not typecheck) — `useCreateRecurringExpense`'s
+      input type was not separately duplicated in the test since it's structurally identical to
+      `RecurringExpense` minus `id`/`created_at`; the same compile-time pin covers both.
+- [x] 3.17 `[gate,small]` Run `npx vitest run` — full suite green, including 3.2–3.5 and 3.16 against
+      the seeded fixture (non-zero `loaded` proves the seed link is wired). **151/151 passed** (145
+      pre-existing + 6 new: 3.2, 3.3, 3.4, 3.5×2, 3.16), 7 test files.
+- [x] 3.18 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY. **0 errors**, same
+      as PR1/PR2's baseline (measured via `git stash` before this PR's diff: 0 errors before, 0 after).
+- [ ] 3.19 `[gate,small]` Run `eslint .` — MANDATORY. **BLOCKED, pre-existing** — same infra gap as
+      tasks 1.14/2.13 (`eslint` not installed, no `eslint.config.*`). Not something this PR introduces
+      or can fix within scope; `tsc` and `vitest` both gate cleanly.
 
 **Untouched, confirmed**: `lib/demo/mock-supabase.ts`, `lib/demo/store.ts` — the shim already stores
 arbitrary row shapes. `useDeleteRecurringExpense` stays unrestricted (C2 — deliberately NOT gated on

@@ -113,6 +113,10 @@ export function useCreateExpense(startDate: string, endDate: string) {
       description: string | null;
       supply_id?: string | null;
       quantity?: number | null;
+      // Set only by the "Cargar pago" flow. The mock shim stores arbitrary
+      // row shapes (mock-supabase.ts's Row = Record<string, unknown>), so
+      // this needs no schema change.
+      recurring_expense_id?: string | null;
     }) => {
       const { data, error } = await supabase
         .from("expenses")

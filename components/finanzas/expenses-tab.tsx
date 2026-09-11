@@ -60,11 +60,19 @@ import { todayArStr, formatDisplayDate } from "@/components/finanzas/expenses-sh
 const PAGE_SIZE = 8;
 
 // A one-shot request from the recurring-expenses tab's "Cargar pago" button,
-// asking this tab to open its create dialog prefilled with a template's
-// description. This tab deliberately knows nothing about recurring
-// templates — the Finanzas page shell owns the tab-switching part and just
-// hands this down.
-export type QuickLogRequest = { description: string };
+// asking this tab to open its create dialog prefilled for a template.
+//
+// `recurringExpenseId` is the LINK the payment counter matches on — the
+// description is a prefill for the human, never a join key (design D7).
+// `category` is the TEMPLATE'S OWN category: this tab no longer assumes
+// "salaries", so a weekly `services` cleaning contract logs correctly. This
+// tab deliberately knows nothing else about recurring templates — the
+// Finanzas page shell owns the tab-switching part and just hands this down.
+export type QuickLogRequest = {
+  description: string;
+  category: ExpenseCategory;
+  recurringExpenseId: string;
+};
 
 export function ExpensesTab({
   startDate,
@@ -94,6 +102,11 @@ export function ExpensesTab({
   const [expenseSupplyMode, setExpenseSupplyMode] = useState<SupplyQuantityMode>("native");
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  // Set only by the quick-log prefill effect below, from
+  // `quickLogRequest.recurringExpenseId` — the FK the new expense will carry
+  // so `paydayProgressFor` can count it (design D7). Cleared on any dialog
+  // close so a manually opened "Nuevo gasto" never inherits a stale link.
+  const [quickLogTemplateId, setQuickLogTemplateId] = useState<string | null>(null);
 
   const { data: supplies } = useSupplies();
   const activeSupplies = useMemo(() => supplies?.filter((s) => s.is_active) ?? [], [supplies]);
@@ -125,6 +138,7 @@ export function ExpensesTab({
     setExpenseSupplyQuantity("");
     setExpenseSupplyMode("native");
     setEditingExpense(null);
+    setQuickLogTemplateId(null);
   }
 
   // Prefills the same dialog/form used for "Nuevo gasto" from an existing
@@ -165,6 +179,7 @@ export function ExpensesTab({
         description: expenseDescription.trim() || null,
         supply_id: hasSupplyQuantity ? expenseSupplyId : null,
         quantity: hasSupplyQuantity ? resolvedExpenseSupplyQuantity : null,
+        recurring_expense_id: quickLogTemplateId,
       });
       toast.success("Gasto registrado");
       setExpenseDialogOpen(false);
@@ -244,9 +259,10 @@ export function ExpensesTab({
   useEffect(() => {
     if (!quickLogRequest) return;
     setExpenseDate(todayArStr());
-    setExpenseCategory("salaries");
+    setExpenseCategory(quickLogRequest.category);
     setExpenseDescription(quickLogRequest.description);
     setExpenseAmount("");
+    setQuickLogTemplateId(quickLogRequest.recurringExpenseId);
     setExpenseDialogOpen(true);
     onQuickLogHandled();
     // eslint-disable-next-line react-hooks/exhaustive-deps

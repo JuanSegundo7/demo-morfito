@@ -164,6 +164,17 @@ export interface Expense {
   // instead of leaving it as free text. See scripts/008-expense-supply-link.sql.
   supply_id?: string | null;
   quantity?: number | null;
+  // The recurring template this payment satisfies, set by the "Cargar pago"
+  // flow. Read by ONE consumer: paydayProgressFor's "N de M pagos cargados"
+  // counter (lib/utils/expenses.ts), which matches on this id and NEVER on
+  // description or category — so renaming a template, or fixing a typo in a
+  // payment's description, cannot change any counter.
+  //
+  // Optional, matching supply_id/quantity above: there is no database and no
+  // migration (lib/demo/mock-supabase.ts's rows are Record<string, unknown>),
+  // so every existing construction site keeps compiling and an unlinked
+  // expense is exactly what it was before this field existed.
+  recurring_expense_id?: string | null;
 }
 
 export interface RecurringExpense {
