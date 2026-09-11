@@ -299,11 +299,11 @@ Droppable without affecting PR1-PR3. No runtime crash-safety is being purchased 
 in-RAM shim has no network and no partial-commit window — this is adopted purely so the reference code
 does not teach the rejected write order forward.
 
-- [ ] 4.1 `[hook,small]` Modify `lib/hooks/use-expenses.ts` — in `useCloseAndReplaceRecurringExpense`
+- [x] 4.1 `[hook,small]` Modify `lib/hooks/use-expenses.ts` — in `useCloseAndReplaceRecurringExpense`
       (`:405-442`), swap the two write blocks so the `INSERT` (currently `:428-434`) runs **before** the
       `UPDATE` (currently `:421-426`). Input type, return type, and `onSuccess` invalidations stay
       **byte-identical** — only statement order changes.
-- [ ] 4.2 `[comment,small]` Add a code comment directly above the reordered blocks (not just in this
+- [x] 4.2 `[comment,small]` Add a code comment directly above the reordered blocks (not just in this
       task list) stating: the visible failure always beats the invisible one — `UPDATE`-then-`INSERT`
       failing mid-way silently drops the fixed cost from every later period (invisible, optimistic);
       `INSERT`-then-`UPDATE` failing mid-way double-counts the cost but shows two "Activo" rows with the
@@ -311,27 +311,32 @@ does not teach the rejected write order forward.
       this repo** — `lib/demo/mock-supabase.ts` is a synchronous in-RAM shim with no network and no
       partial-commit window; adopted only because this file is a reference implementation people copy
       from. *(design D11)*
-- [ ] 4.3 `[types,small]` Modify `lib/utils/export-ledger.ts` — replace both exporters' five positional
+- [x] 4.3 `[types,small]` Modify `lib/utils/export-ledger.ts` — replace both exporters' five positional
       parameters with a single `LedgerExportOptions` interface: `{ entries: LedgerEntry[];
       closingBalance: number; title: string; periodLabel: string; startDate: string; endDate: string
       }`. `title` is new; the rest are the same values, now named. *(design D8)*
-- [ ] 4.4 `[fn,small]` Modify `export-ledger.ts` — `exportLedgerToPdf(options: LedgerExportOptions):
+- [x] 4.4 `[fn,small]` Modify `export-ledger.ts` — `exportLedgerToPdf(options: LedgerExportOptions):
       void` reads `options.title` at `:30` (`doc.text(options.title, 14, 15)`) instead of the hardcoded
       `"Libro diario — Jebbs"`. Worksheet name and filenames (`libro-diario_{start}_{end}.{pdf,xlsx}`)
       stay unchanged — stable artifact identifiers, not business branding.
-- [ ] 4.5 `[fn,small]` Modify `export-ledger.ts` — `exportLedgerToExcel(options: LedgerExportOptions):
+- [x] 4.5 `[fn,small]` Modify `export-ledger.ts` — `exportLedgerToExcel(options: LedgerExportOptions):
       Promise<void>` reads `` `${options.title} — ${options.periodLabel}` `` at `:75` instead of the
       hardcoded `"Libro diario — Jebbs"`. `export-ledger.ts` imports **nothing** from
       `lib/demo/presets/` — stays a pure, framework-free formatter.
-- [ ] 4.6 `[UI,small]` Modify `components/finanzas/daily-ledger.tsx` — add `const ledgerTitle =
+- [x] 4.6 `[UI,small]` Modify `components/finanzas/daily-ledger.tsx` — add `const ledgerTitle =
       useMemo(() => \`Libro diario — ${getActivePreset().label}\`, [])`, following the repo's own
       15-call-site client-preset-access pattern (`rendimiento/page.tsx`, `print-modal.tsx`,
       `order-wizard-drawer.tsx`). Both export button handlers pass a single `LedgerExportOptions` object
       including `title: ledgerTitle`. Props on `DailyLedger` itself stay unchanged.
-- [ ] 4.7 `[gate,small]` Run `npx vitest run` — full suite still green (this phase adds no new
-      arithmetic, so no new test cases are required; existing suite must not regress).
-- [ ] 4.8 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY.
-- [ ] 4.9 `[gate,small]` Run `eslint .` — MANDATORY.
+- [x] 4.7 `[gate,small]` Run `npx vitest run` — full suite still green (this phase adds no new
+      arithmetic, so no new test cases are required; existing suite must not regress). **151/151
+      passed** (unchanged from PR3's baseline — this phase adds zero test cases), 7 test files.
+- [x] 4.8 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY. **0 errors**, same
+      baseline as PR1/PR2/PR3.
+- [ ] 4.9 `[gate,small]` Run `eslint .` — MANDATORY. **BLOCKED, pre-existing** — same infra gap as tasks
+      1.14/2.13/3.19 (`eslint` not installed, no `eslint.config.*`). Confirmed still true: `npx eslint .`
+      fails with "ESLint couldn't find an eslint.config.* file". Not something this PR introduces or can
+      fix within its ~70-line scope; `tsc` and `vitest` both gate cleanly.
 
 ### Manual QA — Phase 4 (Supabase-write-ordering and export-title, not vitest-testable)
 

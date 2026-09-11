@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronLeft, ChevronRight, BookOpen, Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/format";
+import { getActivePreset } from "@/lib/demo/presets/resolve";
 import type { LedgerEntry } from "@/lib/hooks/orders/use-orders-history";
 
 interface DailyLedgerProps {
@@ -52,13 +53,25 @@ export function DailyLedger({
 }: DailyLedgerProps) {
   const [page, setPage] = useState(1);
 
+  // Repo convention for client-side preset access — see rendimiento/page.tsx,
+  // print-modal.tsx, order-wizard-drawer.tsx. Never rendered here, only
+  // handed to the exporter, so it has no bearing on hydration.
+  const ledgerTitle = useMemo(() => `Libro diario — ${getActivePreset().label}`, []);
+
   // jspdf/jspdf-autotable/exceljs (~1.3MB combined) are loaded on demand
   // here instead of via a top-level import — almost nobody clicks Exportar,
   // so the demo shouldn't pay that bundle cost on every /finanzas load.
   async function handleExportPdf() {
     try {
       const { exportLedgerToPdf } = await import("@/lib/utils/export-ledger");
-      exportLedgerToPdf(entries ?? [], closingBalance, periodLabel, startDate, endDate);
+      exportLedgerToPdf({
+        entries: entries ?? [],
+        closingBalance,
+        title: ledgerTitle,
+        periodLabel,
+        startDate,
+        endDate,
+      });
       toast.success("Libro diario exportado");
     } catch {
       toast.error("No se pudo exportar el libro diario");
@@ -68,7 +81,14 @@ export function DailyLedger({
   async function handleExportExcel() {
     try {
       const { exportLedgerToExcel } = await import("@/lib/utils/export-ledger");
-      await exportLedgerToExcel(entries ?? [], closingBalance, periodLabel, startDate, endDate);
+      await exportLedgerToExcel({
+        entries: entries ?? [],
+        closingBalance,
+        title: ledgerTitle,
+        periodLabel,
+        startDate,
+        endDate,
+      });
       toast.success("Libro diario exportado");
     } catch {
       toast.error("No se pudo exportar el libro diario");

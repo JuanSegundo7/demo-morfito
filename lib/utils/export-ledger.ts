@@ -17,17 +17,32 @@ function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function exportLedgerToPdf(
-  entries: LedgerEntry[],
-  closingBalance: number,
-  periodLabel: string,
-  startDate: string,
-  endDate: string
-): void {
+/**
+ * Everything the exporters need, named. Replaces five positional parameters —
+ * four of which were adjacent strings, i.e. silently swappable at the call
+ * site, in the one artifact a viewer downloads and keeps.
+ *
+ * This module imports NOTHING from lib/demo/presets/. `title` arrives fully
+ * composed from components/finanzas/daily-ledger.tsx, which already owns the
+ * on-screen "Libro diario" heading. The pure module formats data; the
+ * component owns the vocabulary.
+ */
+export interface LedgerExportOptions {
+  entries: LedgerEntry[];
+  closingBalance: number;
+  /** e.g. "Libro diario — Pizzería". Never hardcoded here. */
+  title: string;
+  periodLabel: string;
+  startDate: string;
+  endDate: string;
+}
+
+export function exportLedgerToPdf(options: LedgerExportOptions): void {
+  const { entries, closingBalance, title, periodLabel, startDate, endDate } = options;
   const doc = new jsPDF();
 
   doc.setFontSize(14);
-  doc.text("Libro diario — Jebbs", 14, 15);
+  doc.text(title, 14, 15);
   doc.setFontSize(10);
   doc.text(periodLabel, 14, 21);
 
@@ -54,13 +69,8 @@ export function exportLedgerToPdf(
   doc.save(`libro-diario_${startDate}_${endDate}.pdf`);
 }
 
-export async function exportLedgerToExcel(
-  entries: LedgerEntry[],
-  closingBalance: number,
-  periodLabel: string,
-  startDate: string,
-  endDate: string
-): Promise<void> {
+export async function exportLedgerToExcel(options: LedgerExportOptions): Promise<void> {
+  const { entries, closingBalance, title, periodLabel, startDate, endDate } = options;
   const workbook = new Workbook();
   const sheet = workbook.addWorksheet("Libro diario");
 
@@ -72,7 +82,7 @@ export async function exportLedgerToExcel(
     { header: "Saldo", key: "balance", width: 16 },
   ];
 
-  sheet.insertRow(1, [`Libro diario — Jebbs — ${periodLabel}`]);
+  sheet.insertRow(1, [`${title} — ${periodLabel}`]);
   sheet.mergeCells("A1:E1");
   sheet.getRow(1).font = { bold: true };
   sheet.getRow(2).font = { bold: true };

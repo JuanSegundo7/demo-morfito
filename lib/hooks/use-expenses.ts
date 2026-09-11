@@ -422,13 +422,22 @@ export function useCloseAndReplaceRecurringExpense() {
         start_date: string;
       };
     }) => {
-      const { error: closeError } = await supabase
-        .from("recurring_expenses")
-        .update({ end_date: input.closeEndDate })
-        .eq("id", input.closeId);
-
-      if (closeError) throw closeError;
-
+      // WHY THIS ORDER: THE VISIBLE FAILURE ALWAYS BEATS THE INVISIBLE ONE.
+      //   UPDATE -> INSERT: a failure between the writes closes the old
+      //     template with no replacement — the fixed cost SILENTLY
+      //     DISAPPEARS from every later period and profit reads
+      //     optimistically high. Invisible.
+      //   INSERT -> UPDATE: a failure between the writes leaves both rows
+      //     active over the overlap — the cost is counted TWICE. Wrong,
+      //     conservative, and immediately visible as two same-description
+      //     rows both badged "Activo" in the list the operator is already
+      //     looking at.
+      // NOTE, honestly: this buys ZERO runtime safety in THIS repo.
+      // lib/demo/mock-supabase.ts is a synchronous in-RAM shim made
+      // awaitable by a `then` wrapper over an already-computed result —
+      // there is no network, no partial commit, no crash window. It is
+      // adopted because this file is a showcase people copy from, and
+      // shipping the rejected order teaches the bug forward.
       const { data, error: insertError } = await supabase
         .from("recurring_expenses")
         .insert(input.newExpense)
@@ -436,6 +445,13 @@ export function useCloseAndReplaceRecurringExpense() {
         .single();
 
       if (insertError) throw insertError;
+
+      const { error: closeError } = await supabase
+        .from("recurring_expenses")
+        .update({ end_date: input.closeEndDate })
+        .eq("id", input.closeId);
+
+      if (closeError) throw closeError;
       return data as RecurringExpense;
     },
     onSuccess: () => {
