@@ -274,19 +274,19 @@ utilities to tailwind-merge, so both survive into the DOM if not explicitly remo
 16 call-site deletions below are the mechanism, not optional cleanup (F1).
 
 **3 primitives:**
-- [ ] 4.1 `[code-checkable via grep/tsc]` `components/ui/dialog.tsx:41` — **replace** `bg-black/40
+- [x] 4.1 `[code-checkable via grep/tsc]` `components/ui/dialog.tsx:41` — **replace** `bg-black/40
       ios-blur` with `scrim`. `:63` — **replace** `ios-glass ios-shadow-xl` with `modal-surface`,
       keeping `rounded-3xl p-10`. **Replace, never append** — this is the primary R-MODAL surface.
-- [ ] 4.2 `[code-checkable via grep/tsc]` `components/ui/alert-dialog.tsx:39` — replace `bg-black/50`
+- [x] 4.2 `[code-checkable via grep/tsc]` `components/ui/alert-dialog.tsx:39` — replace `bg-black/50`
       with `scrim`. `:57` — replace `bg-background … border … shadow-lg` with `modal-surface`, keeping
       `rounded-lg p-6`.
-- [ ] 4.3 `[code-checkable via grep/tsc]` `components/ui/sheet.tsx:39` — replace `bg-black/50` with
+- [x] 4.3 `[code-checkable via grep/tsc]` `components/ui/sheet.tsx:39` — replace `bg-black/50` with
       `scrim`. `:61` — replace `bg-background … shadow-lg` with `modal-surface`. Leave the per-side
       `border-l/r/t/b` at `:63-69` untouched — they set width only and are now redundant no-ops;
       cleaning them up is separate churn, not this PR's job.
 
 **Header (drops now-redundant class, no blur added — Decision 4 / Q2):**
-- [ ] 4.4 `[code-checkable via grep/tsc]` `components/layout/header.tsx:38` — drop `bg-card`, **keep**
+- [x] 4.4 `[code-checkable via grep/tsc]` `components/layout/header.tsx:38` — drop `bg-card`, **keep**
       `ios-glass`. Do **NOT** add `material-regular`: `SidebarLayout`'s `<main>` is the scroller
       (`sidebar-layout.tsx:42`), `<Header>` is an ordinary `shrink-0` in-flow first child with no
       `sticky` anywhere in `components/layout/` — nothing ever scrolls behind it, so `backdrop-filter`
@@ -295,29 +295,44 @@ utilities to tailwind-merge, so both survive into the DOM if not explicitly remo
 
 **10 files, 16 call sites — delete the `ios-glass` token from each `<DialogContent>`/
 `<AlertDialogContent>` `className`, keep `rounded-2xl` and all sizing classes (F1):**
-- [ ] 4.5 `[code-checkable via grep/tsc]` `app/(dashboard)/menu/combos/page.tsx:275` and `:447`.
-- [ ] 4.6 `[code-checkable via grep/tsc]` `app/(dashboard)/menu/extras/page.tsx:284` and `:368`.
-- [ ] 4.7 `[code-checkable via grep/tsc]` `components/menu/edit-recipe-dialog.tsx:282`.
-- [ ] 4.8 `[code-checkable via grep/tsc]` `components/costos/supply-form-dialog.tsx:300`.
-- [ ] 4.9 `[code-checkable via grep/tsc]` `components/costos/supplies-tab.tsx:510`.
-- [ ] 4.10 `[code-checkable via grep/tsc]` `components/clientes/customer-detail.tsx:286` and `:311`.
-- [ ] 4.11 `[code-checkable via grep/tsc]` `components/clientes/create-customer-dialog.tsx:72`.
-- [ ] 4.12 `[code-checkable via grep/tsc]` `components/clientes/address-form-dialog.tsx:93`.
-- [ ] 4.13 `[code-checkable via grep/tsc]` `components/finanzas/recurring-expenses-tab.tsx:326`, `:460`,
+- [x] 4.5 `[code-checkable via grep/tsc]` `app/(dashboard)/combos/page.tsx:275` and `:447`. **Path
+      corrected during apply**: this task originally said `app/(dashboard)/menu/combos/page.tsx`; the
+      real path (verified against the working tree and `design.md`'s F1 list) has no `menu/` segment.
+- [x] 4.6 `[code-checkable via grep/tsc]` `app/(dashboard)/extras/page.tsx:284` and `:368`. **Path
+      corrected during apply** (same `menu/` mismatch as 4.5).
+- [x] 4.7 `[code-checkable via grep/tsc]` `components/costos/edit-recipe-dialog.tsx:282`. **Path
+      corrected during apply**: real location is `components/costos/`, not `components/menu/`.
+- [x] 4.8 `[code-checkable via grep/tsc]` `components/costos/supply-form-dialog.tsx:300`.
+- [x] 4.9 `[code-checkable via grep/tsc]` `components/costos/supplies-tab.tsx:510`.
+- [x] 4.10 `[code-checkable via grep/tsc]` `components/customers/customer-detail.tsx:286` and `:311`.
+      **Path corrected during apply**: real directory is `components/customers/`, not
+      `components/clientes/`.
+- [x] 4.11 `[code-checkable via grep/tsc]` `components/customers/create-customer-dialog.tsx:72`. **Path
+      corrected during apply** (same `clientes/` → `customers/` mismatch as 4.10).
+- [x] 4.12 `[code-checkable via grep/tsc]` `components/customers/address-form-dialog.tsx:93`. **Path
+      corrected during apply** (same `clientes/` → `customers/` mismatch as 4.10).
+- [x] 4.13 `[code-checkable via grep/tsc]` `components/finanzas/recurring-expenses-tab.tsx:326`, `:460`,
       and `:567`.
-- [ ] 4.14 `[code-checkable via grep/tsc]` `components/finanzas/expenses-tab.tsx:383` and `:553`.
-- [ ] 4.15 `[code-checkable via grep/tsc]` R-MODAL grep gate — `grep -rn 'ios-glass' --include=*.tsx` on
+- [x] 4.14 `[code-checkable via grep/tsc]` `components/finanzas/expenses-tab.tsx:383` and `:553`.
+- [x] 4.15 `[code-checkable via grep/tsc]` R-MODAL grep gate — `grep -rn 'ios-glass' --include=*.tsx` on
       every `DialogContent`/`AlertDialogContent` call site MUST return empty after 4.1 and 4.5-4.14.
       `grep` for any single `className`/`class` string containing **both** `ios-glass` (or any
       `ios-shadow-sm/md/lg/xl`) and `modal-surface` MUST return empty repo-wide — this is the primary
       enforcement mechanism `sdd-verify` re-runs; a non-empty result is CRITICAL.
-- [ ] 4.16 `[code-checkable via grep/tsc]` Confirm `ui/sidebar.tsx:190`'s `SheetContent
+- [x] 4.16 `[code-checkable via grep/tsc]` Confirm `ui/sidebar.tsx:190`'s `SheetContent
       className="bg-sidebar …"` (mobile sidebar) is **left as is** — `bg-sidebar` (1 declaration) still
       wins `background-color` over `modal-surface` by the same comparator (Decision 2), so the mobile
       sidebar correctly keeps `--sidebar` (= `material-thick` after PR3) with `modal-surface`'s blur.
       This is intentional and already verified in design.md — do not "fix" it.
-- [ ] 4.17 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (14 `.tsx` files).
-- [ ] 4.18 `[gate,small]` Run `npm test` (`vitest run`) — full suite green.
+- [x] 4.17 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (14 `.tsx` files).
+      0 errors, baseline and post-change.
+- [x] 4.18 `[gate,small]` Run `npm test` (`vitest run`) — full suite green. 151/151, baseline and
+      post-change.
+- [x] 4.19 `[gate,small]` (added during apply, not in original numbering) Shipped the R-MODAL unlayered
+      guard (`.modal-surface.ios-glass { … }`, PR5's Decision-2 body) in `app/globals.css` now, per the
+      launch prompt's explicit PR4 gate requirement. Placed after the `.ios-glass` `@utility` block and
+      before the accessibility blocks — `.ios-sidebar` does not exist yet (PR5), so this is the correct
+      slot until PR5 adds its own selector ahead of it.
 
 ### Manual QA — Phase 4
 

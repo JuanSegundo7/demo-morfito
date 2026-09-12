@@ -507,7 +507,7 @@ export function SuppliesTab() {
           }
         }}
       >
-        <AlertDialogContent className="ios-glass rounded-2xl">
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar insumo</AlertDialogTitle>
             <AlertDialogDescription>

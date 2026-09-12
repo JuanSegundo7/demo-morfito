@@ -281,7 +281,7 @@ export default function ExtrasPage() {
 
       {/* CREATE / EDIT DIALOG */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="ios-glass rounded-2xl">
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>
               {editingExtra ? "Editar item" : "Nuevo item"}
@@ -365,7 +365,7 @@ export default function ExtrasPage() {
 
       {/* DELETE DIALOG */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="ios-glass rounded-2xl">
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar item</AlertDialogTitle>
             <AlertDialogDescription>

@@ -380,7 +380,7 @@ export function ExpensesTab({
           if (!open) resetExpenseForm();
         }}
       >
-        <DialogContent className="sm:max-w-xl ios-glass rounded-2xl">
+        <DialogContent className="sm:max-w-xl rounded-2xl">
           <DialogHeader>
             <DialogTitle>{editingExpense ? "Editar gasto" : "Nuevo gasto"}</DialogTitle>
           </DialogHeader>
@@ -550,7 +550,7 @@ export function ExpensesTab({
 
       {/* ─── Delete one-off expense confirm ─── */}
       <AlertDialog open={!!deletingExpense} onOpenChange={(open) => !open && setDeletingExpense(null)}>
-        <AlertDialogContent className="ios-glass rounded-2xl">
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar gasto</AlertDialogTitle>
             <AlertDialogDescription>

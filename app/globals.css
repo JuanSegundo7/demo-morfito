@@ -329,6 +329,17 @@
   border-top-color: var(--specular);
 }
 
+/* R-MODAL guard. Belt-and-braces ONLY: the requirement is that these two classes
+   never land on the same element (sdd-verify greps for it). Unlayered, so it beats
+   both utilities regardless of how Tailwind's sorter orders them — which is the
+   only thing that works, because the sorter never reads source position.
+   Fires solely on the accident; normal modal-surface usage is untouched. */
+.modal-surface.ios-glass {
+  background-color: var(--material-thick);
+  border-color: var(--hairline);
+  border-top-color: var(--specular-strong);
+}
+
 /* Accessibility fallbacks for the material/glass system (PR1). Unlayered, so
    they beat every rule in a named cascade layer regardless of specificity or
    order (design.md Decision 2 / Deliverable 3). The `.ios-sidebar [data-slot=

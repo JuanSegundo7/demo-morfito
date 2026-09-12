@@ -323,7 +323,7 @@ export function RecurringExpensesTab({
           if (!open) resetRecurringForm();
         }}
       >
-        <DialogContent className="sm:max-w-xl ios-glass rounded-2xl">
+        <DialogContent className="sm:max-w-xl rounded-2xl">
           <DialogHeader>
             <DialogTitle>Nuevo gasto fijo</DialogTitle>
             <DialogDescription>
@@ -457,7 +457,7 @@ export function RecurringExpensesTab({
           if (!open) setUpdatingTemplate(null);
         }}
       >
-        <DialogContent className="sm:max-w-xl ios-glass rounded-2xl">
+        <DialogContent className="sm:max-w-xl rounded-2xl">
           <DialogHeader>
             <DialogTitle>Actualizar</DialogTitle>
             <DialogDescription>
@@ -564,7 +564,7 @@ export function RecurringExpensesTab({
         open={!!deletingRecurring}
         onOpenChange={(open) => !open && setDeletingRecurring(null)}
       >
-        <AlertDialogContent className="ios-glass rounded-2xl">
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar gasto fijo</AlertDialogTitle>
             <AlertDialogDescription>
