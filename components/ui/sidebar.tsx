@@ -164,6 +164,7 @@ function Sidebar({
   collapsible?: 'offcanvas' | 'icon' | 'none'
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const [isResizing, setIsResizing] = React.useState(false)
 
   if (collapsible === 'none') {
     return (
@@ -228,6 +229,13 @@ function Sidebar({
       />
       <div
         data-slot="sidebar-container"
+        data-resizing={isResizing}
+        onTransitionStart={(e) => {
+          if (e.propertyName === 'width') setIsResizing(true)
+        }}
+        onTransitionEnd={(e) => {
+          if (e.propertyName === 'width') setIsResizing(false)
+        }}
         className={cn(
           'fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-300 ease-in-out md:flex',
           side === 'left'

@@ -340,6 +340,39 @@
   border-top-color: var(--specular-strong);
 }
 
+/* The hook layout/sidebar.tsx:66 has been referencing since before it existed.
+   Lands on sidebar-container (the p-2 wrapper), so it reaches the inner panel.
+   Written UNLAYERED on purpose: sidebar-inner carries
+   group-data-[variant=floating]:{rounded-lg,border,shadow-sm}, which are
+   variant utilities and therefore always sort after any variant-less utility
+   in Tailwind's own ordering (design.md Decision 2). An @utility here would
+   need !important on every property to win (jebbs used it on two and
+   silently lost the other two). Unlayered beats the whole utilities layer
+   with no !important at all. */
+.ios-sidebar [data-slot="sidebar-inner"] {
+  backdrop-filter: blur(var(--blur-thick)) saturate(var(--material-saturate));
+  -webkit-backdrop-filter: blur(var(--blur-thick))
+    saturate(var(--material-saturate));
+  background-color: var(--material-thick);
+  border: 1px solid var(--hairline);
+  border-top-color: var(--specular-strong);
+  border-radius: var(--radius-xl); /* 16px here (--radius: 12px), not jebbs' 18px */
+  box-shadow: var(--shadow-lg);
+}
+
+/* Recomputing blur(44px) every frame while sidebar-container animates its
+   `width` (icon <-> expanded, ui/sidebar.tsx, duration-300) is expensive — it
+   reads as dropped frames on the toggle. For the duration of the transition
+   only (data-resizing, set by onTransitionStart/End in the component itself)
+   the panel falls back to an opaque surface with no blur; the real blur
+   returns by itself, at rest, on both sides of the gesture. This is a
+   measured performance fallback, not a preference. */
+.ios-sidebar[data-resizing="true"] [data-slot="sidebar-inner"] {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: var(--surface-3);
+}
+
 /* Accessibility fallbacks for the material/glass system (PR1). Unlayered, so
    they beat every rule in a named cascade layer regardless of specificity or
    order (design.md Decision 2 / Deliverable 3). The `.ios-sidebar [data-slot=

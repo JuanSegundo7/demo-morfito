@@ -350,7 +350,7 @@ utilities to tailwind-merge, so both survive into the DOM if not explicitly remo
 
 ## Phase 5 (PR5): Sidebar glass — `.ios-sidebar` + R-MODAL guard + `data-resizing` (~45 lines, 2 files)
 
-- [ ] 5.1 `[code-checkable via grep/tsc]` In `app/globals.css`, add the unlayered `.ios-sidebar` rule,
+- [x] 5.1 `[code-checkable via grep/tsc]` In `app/globals.css`, add the unlayered `.ios-sidebar` rule,
       placed after the `@utility` blocks and **before** the 4 accessibility blocks (PR1) that already
       reference its selector. Exact CSS (Decision 8 — unlayered plain rule, not `@utility`, no
       `!important`, because `sidebar-inner`'s `group-data-[variant=floating]:{rounded-lg,border,
@@ -374,7 +374,7 @@ utilities to tailwind-merge, so both survive into the DOM if not explicitly remo
         background-color: var(--surface-3);
       }
       ```
-- [ ] 5.2 `[code-checkable via grep/tsc]` Immediately after 5.1's block, add the R-MODAL unlayered guard
+- [x] 5.2 `[code-checkable via grep/tsc]` Immediately after 5.1's block, add the R-MODAL unlayered guard
       (belt-and-braces only — the binding requirement stays "the two classes never coexist," enforced
       by 4.15's grep). Exact CSS:
       ```css
@@ -389,22 +389,23 @@ utilities to tailwind-merge, so both survive into the DOM if not explicitly remo
         border-top-color: var(--specular-strong);
       }
       ```
-- [ ] 5.3 `[code-checkable via grep/tsc]` In `components/ui/sidebar.tsx`, declare `const [isResizing,
+- [x] 5.3 `[code-checkable via grep/tsc]` In `components/ui/sidebar.tsx`, declare `const [isResizing,
       setIsResizing] = useState(false)` next to `useSidebar()` (`:166`), mirroring
       `jebbs/ui/sidebar.tsx:181`.
-- [ ] 5.4 `[code-checkable via grep/tsc]` `sidebar-container` (`:229-243`) gains `data-resizing=
+- [x] 5.4 `[code-checkable via grep/tsc]` `sidebar-container` (`:229-243`) gains `data-resizing=
       {isResizing}`, `onTransitionStart={(e) => e.propertyName === 'width' && setIsResizing(true)}`,
       `onTransitionEnd={(e) => e.propertyName === 'width' && setIsResizing(false)}` — both handlers
       MUST check `propertyName === 'width'` so a `left`/`right` transition never toggles the flag,
       mirroring `jebbs/ui/sidebar.tsx:246-252`.
-- [ ] 5.5 `[code-checkable via grep/tsc]` Confirm `components/layout/sidebar.tsx:66` is left
+- [x] 5.5 `[code-checkable via grep/tsc]` Confirm `components/layout/sidebar.tsx:66` is left
       **byte-identical** — its `className="ios-sidebar"` finally resolves, no edit needed there
       (spec.md's own explicit requirement).
-- [ ] 5.6 `[code-checkable via grep/tsc]` Re-run 4.15's R-MODAL grep repo-wide as a final gate — must
+- [x] 5.6 `[code-checkable via grep/tsc]` Re-run 4.15's R-MODAL grep repo-wide as a final gate — must
       still return empty after this PR's additions.
-- [ ] 5.7 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (`sidebar.tsx`
-      touched).
-- [ ] 5.8 `[gate,small]` Run `npm test` (`vitest run`) — full suite green.
+- [x] 5.7 `[gate,small]` Run `npx tsc --noEmit -p tsconfig.demo.json` — MANDATORY (`sidebar.tsx`
+      touched). 0 errors, baseline and post-change.
+- [x] 5.8 `[gate,small]` Run `npm test` (`vitest run`) — full suite green. 151/151, baseline and
+      post-change.
 
 ### Manual QA — Phase 5
 
