@@ -82,7 +82,7 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
             )}
           >
             <span className={cn(baloo.className, "text-base font-bold tracking-wide whitespace-nowrap")}>
-              Dishflow
+              Morfito
             </span>
           </div>
         </div>

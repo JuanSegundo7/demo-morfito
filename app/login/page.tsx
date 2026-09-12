@@ -49,9 +49,9 @@ export default function LoginPage() {
         <div className="flex items-center gap-3 relative z-10">
           <div className="h-9 w-9 rounded-xl bg-white flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/solvify-icon.jpg" alt="Dishflow" className="h-9 w-9 rounded-xl object-cover" />
+            <img src="/solvify-icon.jpg" alt="Morfito" className="h-9 w-9 rounded-xl object-cover" />
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">Dishflow</span>
+          <span className="text-white font-semibold text-lg tracking-tight">Morfito</span>
         </div>
 
         {/* Hero text */}
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-zinc-600 text-xs relative z-10">
-          © {new Date().getFullYear()} Dishflow · Modo demo
+          © {new Date().getFullYear()} Morfito · Modo demo
         </p>
       </div>
 
@@ -91,8 +91,8 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <div className="flex items-center gap-2 lg:hidden">
-            <img src="/solvify-icon.jpg" alt="Dishflow" className="h-8 w-8 rounded-lg object-cover" />
-            <span className="text-white font-semibold">Dishflow</span>
+            <img src="/solvify-icon.jpg" alt="Morfito" className="h-8 w-8 rounded-lg object-cover" />
+            <span className="text-white font-semibold">Morfito</span>
           </div>
 
           <div className="space-y-1">

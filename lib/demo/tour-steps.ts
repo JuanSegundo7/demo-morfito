@@ -27,7 +27,7 @@ export function getTourSteps(lexicon: PresetLexicon, businessLabel: string): Tou
 
   return [
     {
-      title: "¡Bienvenido a Dishflow! 👋",
+      title: "¡Bienvenido a Morfito! 👋",
       description: `Este es el sistema de operaciones de tu ${businessLabel.toLowerCase()}. En menos de 2 minutos te mostramos cómo funciona cada sección.`,
       route: "/",
       position: "bottom-right",

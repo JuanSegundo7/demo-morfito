@@ -23,7 +23,7 @@ export const DEFAULT_PRESET_ID: PresetId = "hamburgueseria";
 
 // Name of the cookie the middleware sets from `?negocio=` and that
 // resolve.ts reads back synchronously on the client.
-export const PRESET_COOKIE = "dishflow_preset";
+export const PRESET_COOKIE = "morfito_preset";
 
 // ~30 days — long enough to survive across visits during a sales trip.
 // Shared by middleware.ts (Set-Cookie on the response) and resolve.ts's

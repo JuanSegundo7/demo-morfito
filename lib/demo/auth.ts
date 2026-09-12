@@ -1,6 +1,6 @@
-const DEMO_EMAIL = "admin@dishflow.app"
+const DEMO_EMAIL = "admin@morfito.app"
 const DEMO_PASSWORD = "demo1234"
-export const SESSION_COOKIE = "dishflow_session"
+export const SESSION_COOKIE = "morfito_session"
 
 export const DEMO_CREDENTIALS = {
   email: DEMO_EMAIL,

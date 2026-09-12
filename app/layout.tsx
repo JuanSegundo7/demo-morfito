@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error("[presets] generateMetadata: failed to resolve active preset", error);
   }
   return {
-    title: "Dishflow - Sistema de Operaciones",
+    title: "Morfito - Sistema de Operaciones",
     description: `Sistema de operaciones para ${productPlural}`,
     generator: "v0.app",
     icons: {

@@ -55,7 +55,7 @@ export function LoginForm() {
           height={56}
           className="rounded-full"
         />
-        <CardTitle>Solvify Dashboard</CardTitle>
+        <CardTitle>Morfito Dashboard</CardTitle>
         <CardDescription>Ingresá con tu cuenta</CardDescription>
       </CardHeader>
       <CardContent>

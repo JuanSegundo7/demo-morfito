@@ -154,7 +154,7 @@ export function formatOrderForWhatsapp(order: Order) {
     totalParts.push(`${label} -${formatCurrency(order.discount_amount)}`);
   }
 
-  return `*SOLVIFY DASHBOARD*
+  return `*MORFITO DASHBOARD*
 🧾 *PEDIDO #${order.order_number}* · ${formatDateTime(order.created_at)}
 
 👤 *${order.customer_name}* · ${paymentIcon}

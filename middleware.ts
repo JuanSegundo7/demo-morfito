@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server"
 // presets' data into the edge bundle.
 import { PRESET_COOKIE, PRESET_COOKIE_MAX_AGE_SECONDS, isPresetId } from "./lib/demo/presets/ids"
 
-const SESSION_COOKIE = "dishflow_session"
+const SESSION_COOKIE = "morfito_session"
 const PRESET_QUERY_PARAM = "negocio"
 
 export function middleware(request: NextRequest) {

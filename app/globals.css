@@ -71,7 +71,6 @@
   --hairline-strong: rgba(60, 60, 67, 0.22);
   --specular: rgba(255, 255, 255, 0.6);
   --specular-strong: rgba(255, 255, 255, 0.85);
-  --solvify: #ff9500;
 }
 
 /* Dark theme — zinc palette (matches login aesthetic) */
@@ -137,7 +136,6 @@
   --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 40px -8px rgba(0, 0, 0, 0.65), 0 6px 14px -6px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 32px 80px -16px rgba(0, 0, 0, 0.75), 0 12px 28px -12px rgba(0, 0, 0, 0.55);
-  --solvify: #ff9500;
 }
 
 @theme inline {
@@ -192,7 +190,6 @@
   --color-status-ready: var(--status-ready);
   --color-status-completed: var(--status-completed);
   --color-status-canceled: var(--status-canceled);
-  --color-solvify: var(--solvify);
 }
 
 @layer base {
