@@ -15,19 +15,40 @@
   --card-foreground: #1c1c1e;
   --popover: var(--material-thick);
   --popover-foreground: #1c1c1e;
-  --primary: #007aff;
-  --primary-foreground: #ffffff;
   --secondary: rgba(120, 120, 128, 0.16);
   --secondary-foreground: #1c1c1e;
   --muted: rgba(120, 120, 128, 0.12);
   --muted-foreground: #8e8e93;
-  --accent: #007aff;
-  --accent-foreground: #ffffff;
+  /* jebbs brand accent — four primitives + tint ladder (paleta-naranja-jebbs, design.md Deliverable).
+     The brand hex appears exactly once per theme block, here. */
+  --accent-brand: #f57c00; /* Fills and rings. Must stay light in light mode (design.md Decision 1(3)). */
+  --accent-hover: #d96c00;
+  --accent-pressed: #b85c00;
+  /* Text on a solid orange fill — never white. jebbs: "texto SOBRE naranja — nunca blanco".
+     7.08:1 light / 9.32:1 dark (hand-computed WCAG 2.x, design.md Decision 1). */
+  --accent-contrast: #180d00;
+  /* Text/icons on tints (new token, not in jebbs — design.md Decision 2).
+     4.87:1 worst light surface / 7.18:1 dark. */
+  --accent-on-surface: #a05000;
+  --accent-tint-08: rgba(245, 124, 0, 0.08);
+  --accent-tint-16: rgba(245, 124, 0, 0.16);
+  --accent-tint-32: rgba(245, 124, 0, 0.32); /* Ladder completeness — no consumer yet (Decision 6). */
+  /* KNOWN, ACCEPTED, NOT FIXED HERE (R11 — design.md §Risks): text-primary on light surfaces regresses
+     from 3.60:1 to 2.42:1 across 35 sites / 21 files as a direct, measured consequence of --primary
+     becoming --accent-brand. --accent-on-surface (above) already clears AA on every light surface, but
+     wiring it in requires repointing text-primary -> text-accent-on-surface across 21 files plus one
+     --color-accent-on-surface entry in @theme inline — out of scope for this change, tracked as a
+     separate follow-up PR immediately after this one. Pre-existing warning/orange vocabulary
+     (demo-banner, delay timers, medal colours) is also unchanged by this change (F2). */
+  --primary: var(--accent-brand);
+  --primary-foreground: var(--accent-contrast);
+  --accent: var(--accent-tint-16);
+  --accent-foreground: var(--accent-on-surface);
   --destructive: #ff3b30;
   --destructive-foreground: #ffffff;
   --border: var(--hairline);
   --input: rgba(120, 120, 128, 0.12);
-  --ring: #007aff;
+  --ring: var(--accent-brand);
   --chart-1: #007aff;
   --chart-2: #34c759;
   --chart-3: #ff9500;
@@ -36,16 +57,19 @@
   --radius: 12px;
   --sidebar: var(--material-thick);
   --sidebar-foreground: #1c1c1e;
-  --sidebar-primary: #007aff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(120, 120, 128, 0.16);
-  --sidebar-accent-foreground: #1c1c1e;
+  --sidebar-primary: var(--accent-brand);
+  --sidebar-primary-foreground: var(--accent-contrast);
+  --sidebar-accent: var(--accent-tint-08);
+  --sidebar-accent-foreground: var(--accent-on-surface);
   --sidebar-border: var(--hairline);
-  --sidebar-ring: #007aff;
+  --sidebar-ring: var(--accent-brand);
   /* iOS Status colors */
   --status-new: #007aff;
   --status-paid: #34c759;
-  --status-ready: #ff9500;
+  /* Tailwind green-500 (theme.css), matching what the kanban already renders in 9 sites/5 files —
+     literal, not var(--color-green-500): v4 only emits theme vars for values used in markup
+     (design.md Decision 3). */
+  --status-ready: oklch(72.3% 0.219 149.579);
   --status-completed: #8e8e93;
   --status-canceled: #ff3b30;
   /* iOS Shadows */
@@ -81,19 +105,32 @@
   --card-foreground: #fafafa;
   --popover: var(--material-thick);
   --popover-foreground: #fafafa;
-  --primary: #0a84ff;
-  --primary-foreground: #ffffff;
+  --primary: var(--accent-brand);
+  --primary-foreground: var(--accent-contrast);
   --secondary: #27272a;
   --secondary-foreground: #fafafa;
   --muted: #27272a;
   --muted-foreground: #a1a1aa;
-  --accent: #27272a;
-  --accent-foreground: #fafafa;
+  /* jebbs brand accent — four primitives + tint ladder (paleta-naranja-jebbs, design.md Deliverable).
+     The brand hex appears exactly once per theme block, here. */
+  --accent-brand: #ff9f0a; /* Fills and rings. */
+  --accent-hover: #ffb340; /* Dark hover lightens — inverted vs light on purpose (design.md Decision 6). */
+  --accent-pressed: #e08600;
+  /* Text on a solid orange fill — never white. jebbs: "texto SOBRE naranja — nunca blanco".
+     9.32:1 dark, unchanged from jebbs (design.md Decision 1). */
+  --accent-contrast: #180d00;
+  /* Text/icons on tints. Dark needs no override — 7.18:1 via --accent-brand (design.md Decision 2). */
+  --accent-on-surface: var(--accent-brand);
+  --accent-tint-08: rgba(255, 159, 10, 0.08);
+  --accent-tint-16: rgba(255, 159, 10, 0.16);
+  --accent-tint-32: rgba(255, 159, 10, 0.32); /* Ladder completeness — no consumer yet (Decision 6). */
+  --accent: var(--accent-tint-16);
+  --accent-foreground: var(--accent-on-surface);
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: var(--hairline);
   --input: #27272a;
-  --ring: #0a84ff;
+  --ring: var(--accent-brand);
   --chart-1: #3b82f6;
   --chart-2: #22c55e;
   --chart-3: #f59e0b;
@@ -101,16 +138,18 @@
   --chart-5: #ec4899;
   --sidebar: var(--material-thick);
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #0a84ff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #27272a;
-  --sidebar-accent-foreground: #fafafa;
+  --sidebar-primary: var(--accent-brand);
+  --sidebar-primary-foreground: var(--accent-contrast);
+  --sidebar-accent: var(--accent-tint-08);
+  --sidebar-accent-foreground: var(--accent-on-surface);
   --sidebar-border: var(--hairline);
-  --sidebar-ring: #0a84ff;
+  --sidebar-ring: var(--accent-brand);
   /* Status colors */
   --status-new: #3b82f6;
   --status-paid: #22c55e;
-  --status-ready: #f59e0b;
+  /* Tailwind green-500 (theme.css), matching what the kanban already renders — literal, not
+     var(--color-green-500): v4 only emits theme vars for values used in markup (design.md Decision 3). */
+  --status-ready: oklch(72.3% 0.219 149.579);
   --status-completed: #71717a;
   --status-canceled: #ef4444;
   /* Material/glass surface tokens (PR1 — additive; nothing consumes these until PR2+) */

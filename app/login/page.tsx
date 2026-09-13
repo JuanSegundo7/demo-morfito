@@ -42,7 +42,9 @@ export default function LoginPage() {
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-zinc-950 p-12 relative overflow-hidden">
 
         {/* Subtle gradient orb */}
-        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
+        {/* Second orb stays indigo on purpose (design.md Decision 5) — migrating it would either
+            flatten the gradient into two identical oranges or invent a second decorative hue. */}
         <div className="absolute -bottom-32 -right-16 w-[400px] h-[400px] rounded-full bg-indigo-600/10 blur-[100px] pointer-events-none" />
 
         {/* Logo */}

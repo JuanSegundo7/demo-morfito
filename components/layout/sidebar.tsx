@@ -113,12 +113,12 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
                       className={cn(
                         "rounded-lg transition-all duration-200 h-9",
                         isActive
-                          ? "bg-primary/10 text-primary font-medium"
+                          ? "bg-accent text-sidebar-accent-foreground font-medium"
                           : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                       )}
                     >
                       <Link href={item.href}>
-                        <item.icon className={cn("size-4 shrink-0", isActive && "text-primary")} />
+                        <item.icon className={cn("size-4 shrink-0", isActive && "text-sidebar-accent-foreground")} />
                         <span className="text-sm">{item.name}</span>
                       </Link>
                     </SidebarMenuButton>
