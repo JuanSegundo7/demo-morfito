@@ -99,7 +99,7 @@
 
 /* Dark theme — zinc palette (matches login aesthetic) */
 .dark {
-  --background: #09090b;
+  --background: #08090c;
   --foreground: #fafafa;
   --card: var(--material-thin);
   --card-foreground: #fafafa;
@@ -153,13 +153,13 @@
   --status-completed: #71717a;
   --status-canceled: #ef4444;
   /* Material/glass surface tokens (PR1 — additive; nothing consumes these until PR2+) */
-  --surface-0: #09090b;
-  --surface-1: #101215;
-  --surface-2: #18181b;
-  --surface-3: #202024;
-  --material-thin: rgba(24, 24, 27, 0.55);
-  --material-regular: rgba(24, 24, 27, 0.72);
-  --material-thick: rgba(15, 15, 17, 0.85);
+  --surface-0: #08090c;
+  --surface-1: #101218;
+  --surface-2: #171a22;
+  --surface-3: #1f232d;
+  --material-thin: rgba(19, 22, 29, 0.42);
+  --material-regular: rgba(19, 22, 29, 0.66);
+  --material-thick: rgba(11, 13, 18, 0.82);
   --well: rgba(0, 0, 0, 0.3);
   --blur-thin: 14px;
   --blur-regular: 28px;
@@ -342,6 +342,24 @@
 
 @utility ios-shadow-xl {
   box-shadow: var(--shadow-xl);
+}
+
+/* Thin glowing rail on the active sidebar item — ported verbatim from jebbs
+   (paleta-naranja-jebbs follow-up). Pure decorative pseudo-element, no
+   dependency on anything else; was left out of sistema-material-glass
+   because it wasn't required for the glass treatment itself. */
+@utility nav-rail-active {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: 4px;
+    left: -1px;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--accent-brand);
+    box-shadow: 0 0 10px -1px var(--accent-brand);
+  }
 }
 
 /* .ios-glass KEEPS its name (~30 files improve for free) and changes MEANING:

@@ -2,13 +2,11 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import Image from "next/image";
 import { PrintServiceIndicator } from "../order-wizard/components/print-service";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useRouter } from "next/navigation";
-import { logout } from "@/lib/demo/auth";
 
 interface HeaderProps {
   title: string;
@@ -27,15 +25,8 @@ export function Header({
   isRefreshing,
   extraActions,
 }: HeaderProps) {
-  const router = useRouter()
-
-  const handleLogout = () => {
-    logout()
-    router.push("/login")
-  }
-
   return (
-    <header className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between md:p-6 ios-glass rounded-md shrink-0">
+    <header className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between md:p-6 material-regular rounded-2xl shrink-0 sticky top-0 z-30">
       <div className="flex items-center gap-3">
         <SidebarTrigger className="md:hidden" />
         <div>
@@ -51,10 +42,6 @@ export function Header({
         {extraActions}
 
         <ThemeToggle />
-
-        <Button variant="ghost" size="icon" onClick={handleLogout} title="Cerrar sesión">
-          <LogOut className="h-4 w-4" />
-        </Button>
 
         {onCreateOrder && (
           <Button onClick={onCreateOrder} size="sm">

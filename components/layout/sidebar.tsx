@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { DemoBanner } from "@/components/demo/demo-banner"
 import { PresetSwitcher } from "@/components/demo/preset-switcher"
 import {
@@ -15,10 +15,12 @@ import {
   User,
   Users,
   Wallet,
+  LogOut,
 } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -29,6 +31,7 @@ import {
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { Pacifico, Baloo_2 } from "next/font/google"
+import { logout } from "@/lib/demo/auth"
 
 const baloo = Baloo_2({
   subsets: ["latin"],
@@ -55,6 +58,12 @@ const navigation = [
 
 export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    logout()
+    router.push("/login")
+  }
 
   const visibleNav = navigation.filter((item) => {
     if (item.adminOnly && role !== "admin") return false
@@ -65,7 +74,10 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
   return (
     <Sidebar collapsible="icon" variant="floating" className="ios-sidebar">
       <SidebarHeader className="pb-2">
-        <div className="flex items-center gap-3 px-1 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0">
+        <div className="flex items-center gap-3 px-1 py-2 transition-all duration-300 ease-in-out overflow-hidden group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0">
+          {/* Sin mx-auto/justify-center en el icono: no interpolan, saltan de
+              golpe a mitad de la transicion. El icono se queda quieto a la
+              izquierda todo el tiempo (mismo fix que jebbs-dashboard). */}
           <Image
             src="/solvify-icon.jpg"
             alt="Logo"
@@ -73,17 +85,27 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
             height={56}
             className="rounded-lg shrink-0 size-8 object-cover"
           />
-          <div
-            className={cn(
-              "flex flex-col leading-tight overflow-hidden",
-              "transition-all duration-300 ease-in-out",
-              "max-w-xs opacity-100",
-              "group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0",
-            )}
-          >
-            <span className={cn(baloo.className, "text-base font-bold tracking-wide whitespace-nowrap")}>
-              Morfito
-            </span>
+          {/* grid-template-columns 1fr -> 0fr, no max-width -> max-w-0: con
+              max-width el ancho real queda pisado en el ancho natural del
+              contenido mientras el techo (max-w-xs) todavia no lo alcanza,
+              asi que la animacion queda "muerta" la mayor parte del tiempo y
+              recien colapsa de golpe al final. El fr-units se achica en
+              proporcion al contenido real desde el primer frame. La opacidad
+              usa la MISMA duracion/easing que el ancho (300ms, sin delay) a
+              proposito, para que el fade no deje una ventana de texto
+              recortado pero visible. */}
+          <div className="grid grid-cols-[1fr] transition-[grid-template-columns] duration-300 ease-in-out group-data-[collapsible=icon]:grid-cols-[0fr]">
+            <div
+              className={cn(
+                "flex flex-col leading-tight overflow-hidden min-w-0",
+                "transition-opacity duration-300 ease-in-out opacity-100",
+                "group-data-[collapsible=icon]:opacity-0",
+              )}
+            >
+              <span className={cn(baloo.className, "text-base font-bold tracking-wide whitespace-nowrap")}>
+                Morfito
+              </span>
+            </div>
           </div>
         </div>
         <div
@@ -113,12 +135,12 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
                       className={cn(
                         "rounded-lg transition-all duration-200 h-9",
                         isActive
-                          ? "bg-accent text-sidebar-accent-foreground font-medium"
+                          ? "nav-rail-active bg-primary/10 text-primary font-medium"
                           : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                       )}
                     >
                       <Link href={item.href}>
-                        <item.icon className={cn("size-4 shrink-0", isActive && "text-sidebar-accent-foreground")} />
+                        <item.icon className={cn("size-4 shrink-0", isActive && "text-primary")} />
                         <span className="text-sm">{item.name}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -129,6 +151,21 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="pb-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              tooltip="Cerrar sesión"
+              className="rounded-lg transition-all duration-200 h-9 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent cursor-pointer"
+            >
+              <LogOut className="size-4 shrink-0" />
+              <span className="text-sm">Cerrar sesión</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }
