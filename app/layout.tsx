@@ -30,19 +30,19 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: {
       icon: [
         {
-          url: "/solvify-icon.jpg",
+          url: "/logo.webp",
           media: "(prefers-color-scheme: light)",
         },
         {
-          url: "/solvify-icon.jpg",
+          url: "/logo.webp",
           media: "(prefers-color-scheme: dark)",
         },
         {
-          url: "/solvify-icon.jpg",
+          url: "/logo.webp",
           type: "image/svg+xml",
         },
       ],
-      apple: "/solvify-icon.jpg",
+      apple: "/logo.webp",
     },
   };
 }

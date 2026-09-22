@@ -79,7 +79,7 @@ export function AppSidebar({ role }: { role?: "admin" | "operator" }) {
               golpe a mitad de la transicion. El icono se queda quieto a la
               izquierda todo el tiempo (mismo fix que jebbs-dashboard). */}
           <Image
-            src="/solvify-icon.jpg"
+            src="/logo.webp"
             alt="Logo"
             width={56}
             height={56}

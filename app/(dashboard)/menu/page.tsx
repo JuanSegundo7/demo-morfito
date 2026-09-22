@@ -83,7 +83,7 @@ export default function MenuPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-const FALLBACK_IMAGE = '/solvify-icon.jpg'
+const FALLBACK_IMAGE = '/logo.webp'
 
   /* ================= HANDLERS ================= */
 
