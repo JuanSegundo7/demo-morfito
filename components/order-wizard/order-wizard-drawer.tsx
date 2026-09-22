@@ -238,7 +238,7 @@ export function OrderWizardDrawer({
       <Sheet open={open} onOpenChange={handleClose} modal={!forceStep}>
         <SheetContent
           side="right"
-          className="flex h-full w-full max-w-2xl flex-col p-0 sm:max-w-2xl"
+          className="flex h-full w-full max-w-2xl flex-col p-0 sm:max-w-2xl backdrop-blur-sm"
           onInteractOutside={(e) => { if (forceStep) e.preventDefault() }}
         >
           {/* HEADER */}
